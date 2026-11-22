@@ -10,7 +10,7 @@ final class ConduitSizing {
     // ITC-BT-21, tables 2, 5, 7 and 9, in installation order.
     private static final double[] SECTIONS = {1.5, 2.5, 4, 6, 10, 16, 25, 35, 50, 70, 95, 120, 150, 185, 240};
     private static final int[] TABLE_NUMBERS = {2, 5, 7, 9};
-    private static final double[] AREA_iACTORS = {2.5, 3, 4, 4};
+    private static final double[] AREA_FACTORS = {2.5, 3, 4, 4};
     private static final int[][][] DIAMETERS = {
         {
             {12,12,16,16,16}, {12,12,16,16,20}, {12,16,20,20,20}, {12,16,20,20,25},
@@ -34,23 +34,30 @@ final class ConduitSizing {
     };
 
     static String calculate(Input x) {
-        int mode = x.option(\mode\);
-        if (x.option(\rule\) == 1) {
-            int diameter = tableDiameter(mode, x.positive(\s\), x.integer(\n\));
-            return \Diámetro exterior mínimo del tubo: \ + diameter + \ mm\nITC-BT-21, tabla \ + TABLE_NUMBERS[mode]
-                    + \\nComprueba las características mecánicas y ambientales del tubo.\;
+        int mode = x.option("mode");
+        if (x.option("rule") == 1) {
+            double section = x.positive("s");
+            int count = x.integer("n");
+            int diameter;
+            try {
+                diameter = tableDiameter(mode, section, count);
+            } catch (IllegalArgumentException e) {
+                throw FieldIssues.invalid("s n", e.getMessage());
+            }
+            return "Diámetro exterior mínimo del tubo: " + diameter + " mm\nITC-BT-21, tabla " + TABLE_NUMBERS[mode]
+                    + "\nComprueba las características mecánicas y ambientales del tubo.";
         }
-        double[] diameters = list(x.text(\list\));
-        double factor = AREA_iACTORS[mode], sum = 0;
+        double[] diameters = x.list("list");
+        double factor = AREA_FACTORS[mode], sum = 0;
         for (double d : diameters) sum += d * d;
         double required = Math.sqrt(factor * sum);
-        double proposed = x.optionalPositive(\d\);
-        return \Superficie ocupada: \ + show(Math.PI * sum / 4) + \ mm²\nDiámetro interior mínimo: \
-                + show(required) + \ mm\nÁrea interior ≥ \ + show(factor) + \ × área ocupada.\
-                + (proposed > 0 ? \\nOcupación del tubo indicado: \ + show(100 * sum / (proposed * proposed)) + \ %\
-                        + (proposed >= required ? \\n~ Cumple el criterio de ocupación.\ : \\n~ Supera la ocupación permitida.\) : \\)
-                + \\n~ Aplica a secciones distintas o más de \ + (mode == 3 ? 10 : 5)
-                + \ conductores. Para conductores iguales dentro del rango, usa la tabla.\;
+        double proposed = x.optionalPositive("d");
+        return "Superficie ocupada: " + show(Math.PI * sum / 4) + " mm²\nDiámetro interior mínimo: "
+                + show(required) + " mm\nÁrea interior ≥ " + show(factor) + " × área ocupada."
+                + (proposed > 0 ? "\nOcupación del tubo indicado: " + show(100 * sum / (proposed * proposed)) + " %"
+                        + (proposed >= required ? "\n~ Cumple el criterio de ocupación." : FieldIssues.warning("d", "Ocupación: el diámetro interior indicado resulta insuficiente.")) : "")
+                + "\n~ Aplica a secciones distintas o más de " + (mode == 3 ? 10 : 5)
+                + " conductores. Para conductores iguales dentro del rango, usa la tabla.";
     }
 
     static int tableDiameter(int mode, double section, int count) {
@@ -61,6 +68,6 @@ final class ConduitSizing {
                     return DIAMETERS[mode][row][column];
             }
         }
-        throw new IllegalArgumentException(\La tabla no contempla esta combinación. Revisa el tipo de canalización y el criterio aplicable.\);
+        throw new IllegalArgumentException("La tabla no contempla esta combinación. Revisa el tipo de canalización y el criterio aplicable.");
     }
 }
