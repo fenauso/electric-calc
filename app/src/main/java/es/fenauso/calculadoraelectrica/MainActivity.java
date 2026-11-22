@@ -63,11 +63,6 @@ public class MainActivity extends Activity {
         TextView title = text("⚡ Cálculo Eléctrico PRO", 26, NAVY, true);
         root.addView(title);
 
-        Button modules = new Button(this);
-        modules.setText("Módulos PRO");
-        modules.setOnClickListener(v -> showProModules());
-        root.addView(modules);
-
         TextView subtitle = text("Carga · Magnetotérmico · Conductor", 15, MUTED, false);
         subtitle.setPadding(0,dp(3),0,dp(10));
         root.addView(subtitle);
@@ -225,22 +220,13 @@ public class MainActivity extends Activity {
         note.setPadding(dp(4),dp(14),dp(4),0);
         root.addView(note);
 
-        setContentView(scroll);
+        setContentView(CalculatorTabs.surround(this, scroll, null, this::openProModule));
     }
 
-    private void showProModules() {
-        ProModule[] modules = ProModule.values();
-        String[] titles = new String[modules.length];
-        for (int i = 0; i < modules.length; i++) titles[i] = modules[i].title;
-        new AlertDialog.Builder(this)
-                .setTitle("Módulos PRO")
-                .setItems(titles, (dialog, index) -> {
-                    Intent intent = new Intent(this, ProActivity.class);
-                    intent.putExtra(ProActivity.MODULE, modules[index].name());
-                    startActivity(intent);
-                })
-                .setNegativeButton("Cerrar", null)
-                .show();
+    private void openProModule(ProModule module) {
+        Intent intent = new Intent(this, ProActivity.class);
+        intent.putExtra(ProActivity.MODULE, module.name());
+        startActivity(intent);
     }
 
     private void buildAdvancedFields() {

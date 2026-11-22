@@ -26,30 +26,34 @@ public final class ProActivity extends Activity {
     private static final int NAVY = 0xff16324f;
     private final Map<String, View> inputs = new LinkedHashMap<>();
     private final Map<String, View> rows = new LinkedHashMap<>();
+    private static final String DRAFTS = "drafts";
+    private final Bundle drafts = new Bundle();
     private ProModule module;
     private ScrollView scroll;
     private TextView result;
 
     @Override protected void onCreate(Bundle state) {
         super.onCreate(state);
-        module = ProModule.valueOf(getIntent().getStringExtra(MODULE));
+        Bundle savedDrafts = state == null ? null : state.getBundle(DRAFTS);
+        if (savedDrafts != null) drafts.putAll(savedDrafts);
+        String active = state == null ? getIntent().getStringExtra(MODULE) : state.getString(MODULE);
+        module = ProModule.valueOf(active);
         getWindow().setStatusBarColor(NAVY);
+        showModule();
+    }
+
+    private void showModule() {
+        inputs.clear();
+        rows.clear();
+        result = null;
+        Bundle state = drafts.getBundle(module.name());
 
         scroll = new ScrollView(this);
         scroll.setFillViewport(true);
         scroll.setBackgroundColor(0xfff7f9fc);
-        scroll.setOnApplyWindowInsetsListener((view, insets) -> {
-            view.setPadding(insets.getSystemWindowInsetLeft(), insets.getSystemWindowInsetTop(),
-                    insets.getSystemWindowInsetRight(), insets.getSystemWindowInsetBottom());
-            return insets.consumeSystemWindowInsets();
-        });
         LinearLayout body = column();
         body.setPadding(dp(20), dp(12), dp(20), dp(24));
         scroll.addView(body);
-        Button back = new Button(this);
-        back.setText("Volver a módulos");
-        back.setOnClickListener(v -> finish());
-        body.addView(back);
         TextView heading = text(module.title, 24);
         body.addView(heading);
         body.addView(text(module.help, 15));
@@ -70,7 +74,17 @@ public final class ProActivity extends Activity {
         result.setVisibility(View.GONE);
         body.addView(result);
         updateVisibleFields();
-        setContentView(scroll);
+        setContentView(CalculatorTabs.surround(this, scroll, module, this::selectModule));
+    }
+
+    private void selectModule(ProModule selected) {
+        if (selected == null) {
+            finish();
+            return;
+        }
+        rememberInputs();
+        module = selected;
+        showModule();
     }
 
     private void addField(LinearLayout body, String definition, Bundle state) {
@@ -185,10 +199,18 @@ public final class ProActivity extends Activity {
 
     @Override protected void onSaveInstanceState(Bundle state) {
         super.onSaveInstanceState(state);
+        rememberInputs();
+        state.putString(MODULE, module.name());
+        state.putBundle(DRAFTS, drafts);
+    }
+
+    private void rememberInputs() {
+        Bundle state = new Bundle();
         inputs.forEach((key, view) -> {
             if (view instanceof Spinner) state.putInt(key, ((Spinner) view).getSelectedItemPosition());
             else state.putString(key, ((EditText) view).getText().toString());
         });
+        drafts.putBundle(module.name(), state);
     }
 
     private LinearLayout column() {
