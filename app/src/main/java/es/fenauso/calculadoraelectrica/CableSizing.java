@@ -17,12 +17,14 @@ final class CableSizing {
                         + ": " + show(minimumSection) + " mm²"
                 : "Ninguna sección del catálogo cubre la caída o el mínimo aplicable.";
         result += "\nIz requerida: " + show(requiredIz) + " A";
+        boolean specifiedSection = section > 0;
+        if (!specifiedSection) section = minimumSection;
         if (section > 0) {
             double volts = factor * rho * length * current / section;
             double percent = 100 * volts / voltage;
             result += "\nCaída estimada con " + show(section) + " mm²: " + show(volts) + " V ("
                     + show(percent) + " %). " + (percent <= limit ? "Dentro del límite asignado." : "Supera el límite asignado.");
-            if (section < regulatoryMinimum) result += "\nLa sección indicada es inferior al mínimo reglamentario.";
+            if (specifiedSection && section < regulatoryMinimum) result += "\nLa sección indicada es inferior al mínimo reglamentario.";
             if (iz > 0) result += "\nIz declarada: " + show(iz) + " A. "
                     + (iz >= requiredIz ? "Alcanza la Iz requerida." : "Insuficiente para la Iz requerida.");
         }
