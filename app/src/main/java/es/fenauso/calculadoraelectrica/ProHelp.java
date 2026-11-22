@@ -106,8 +106,7 @@ final class ProHelp {
                 case "fault" -> "Valor calculado o declarado para comprobar el poder de corte mínimo del automático CA.";
                 case "rcd" -> "Confirma el tipo de diferencial con el fabricante. El apartado 4.3 de la ITC-BT-40 prevé tipo A para instalaciones próximas al consumo.";
                 case "site" -> "En zona residencial o análoga, la ITC-BT-40 establece sensibilidad de 30 mA para circuitos de generación.";
-                case "rcd" -> "Diferencial según fabricante";
-            case "spd" -> "Selecciona el resultado de la evaluación de sobretensiones y de la coordinación con dispositivos instalados. Verifica ambos lados por separado.";
+                case "spd" -> "Selecciona el resultado de la evaluación de sobretensiones y de la coordinación con dispositivos instalados. Verifica ambos lados por separado.";
                 default -> throw new IllegalArgumentException(key);
             };
             case DC -> switch (key) {
@@ -158,8 +157,7 @@ final class ProHelp {
                 case "iz" -> "Intensidad admisible ya corregida del cable de esa sección. Sirve para contrastar el calibre candidato.";
                 case "method" -> "Anota montaje, aislamiento, agrupamiento, temperatura y conductores cargados que justifican el dato de Iz.";
                 case "rdc" -> "Comprueba en la documentación si hay un RDC-DD conforme a IEC 62955, integrado o externo, antes de seleccionar diferencial tipo A.";
-                case "rcd" -> "Diferencial según fabricante";
-            case "spd" -> "Indica si existen protecciones documentadas contra sobretensiones temporales y transitorias aguas arriba.";
+                case "spd" -> "Indica si existen protecciones documentadas contra sobretensiones temporales y transitorias aguas arriba.";
                 case "distance" -> "Distancia desde el protector transitorio aguas arriba hasta la estación, útil para valorar una protección adicional cercana.";
                 case "kwh" -> "Capacidad útil de la batería del vehículo, en kWh. Este campo activa la estimación de tiempo.";
                 case "from" -> "Estado de carga al enchufar el vehículo, de 0 a 100 %.";
