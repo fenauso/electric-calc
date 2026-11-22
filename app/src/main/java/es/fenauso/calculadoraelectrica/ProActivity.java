@@ -1,6 +1,7 @@
 package es.fenauso.calculadoraelectrica;
 
 import android.app.Activity;
+import android.app.AlertDialog;
 import android.graphics.Color;
 import android.os.Bundle;
 import android.text.Editable;
@@ -52,6 +53,10 @@ public final class ProActivity extends Activity {
         TextView heading = text(module.title, 24);
         body.addView(heading);
         body.addView(text(module.help, 15));
+        Button help = new Button(this);
+        help.setText("ⓘ Ayuda del módulo");
+        help.setOnClickListener(v -> showHelp(module.title, ProHelp.overview(module)));
+        body.addView(help);
         for (String field : module.fields) addField(body, field, state);
 
         Button calculate = new Button(this);
@@ -75,7 +80,7 @@ public final class ProActivity extends Activity {
         LinearLayout row = column();
         if (options.length > 1) {
             Spinner spinner = new Spinner(this);
-            spinner.setContentDescription(String.join(", ", options));
+            spinner.setId(View.generateViewId());
             ArrayAdapter<String> adapter = new ArrayAdapter<>(this, android.R.layout.simple_spinner_item, options);
             adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
             spinner.setAdapter(adapter);
@@ -90,14 +95,15 @@ public final class ProActivity extends Activity {
                 @Override public void onNothingSelected(AdapterView<?> p) {}
             });
             inputs.put(key, spinner);
+            addFieldLabel(row, spinner, ProHelp.selectionTitle(module, key), key);
             row.addView(spinner);
         } else {
             String[] field = options[0].split("=", 2);
-            TextView label = text(field[0], 15);
+
             EditText input = new EditText(this);
             input.setId(View.generateViewId());
             input.setSingleLine(true);
-            label.setLabelFor(input.getId());
+
             boolean freeText = key.equals("list") || key.equals("method") || key.equals("scheme");
             input.setInputType(freeText ? InputType.TYPE_CLASS_TEXT
                     : InputType.TYPE_CLASS_NUMBER | InputType.TYPE_NUMBER_FLAG_SIGNED | InputType.TYPE_NUMBER_FLAG_DECIMAL);
@@ -108,11 +114,33 @@ public final class ProActivity extends Activity {
                 @Override public void afterTextChanged(Editable s) {}
             });
             inputs.put(key, input);
-            row.addView(label);
+            addFieldLabel(row, input, field[0], key);
             row.addView(input);
         }
         rows.put(key, row);
         body.addView(row, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
+    }
+
+    private void addFieldLabel(LinearLayout row, View control, String title, String key) {
+        LinearLayout heading = new LinearLayout(this);
+        heading.setGravity(android.view.Gravity.CENTER_VERTICAL);
+        TextView label = text(title, 15);
+        label.setLabelFor(control.getId());
+        heading.addView(label, new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1));
+        Button info = new Button(this);
+        info.setText("ⓘ");
+        info.setContentDescription("Ayuda sobre " + title);
+        info.setOnClickListener(v -> showHelp(title, ProHelp.field(module, key)));
+        heading.addView(info, new LinearLayout.LayoutParams(dp(48), dp(48)));
+        row.addView(heading);
+    }
+
+    private void showHelp(String title, String message) {
+        new AlertDialog.Builder(this)
+                .setTitle(title)
+                .setMessage(message)
+                .setPositiveButton("Entendido", null)
+                .show();
     }
 
     private void updateVisibleFields() {
