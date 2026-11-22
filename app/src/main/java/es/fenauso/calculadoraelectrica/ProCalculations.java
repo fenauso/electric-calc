@@ -37,6 +37,13 @@ final class ProCalculations {
         return number;
     }
 
+    static String fromSmallerUnit(String input, boolean multiple) {
+        if (!multiple) return Double.toString(decimal(input) / 1000);
+        String[] parts = input.split(";", -1);
+        for (int i = 0; i < parts.length; i++) parts[i] = Double.toString(decimal(parts[i]) / 1000);
+        return String.join(";", parts);
+    }
+
     static double[] list(String input) {
         String[] items = input.split(";", -1);
         double[] values = new double[items.length];

@@ -64,6 +64,28 @@ public class ProCalculationsTest {
         assertTrue(result.contains("Horas equivalentes"));
     }
 
+    @Test
+    public void convertsSmallerUnitsForSingleValuesAndResistanceLists() {
+        assertEquals(0.25, ProCalculations.decimal(ProCalculations.fromSmallerUnit("250", false)), 1e-9);
+        double[] converted = ProCalculations.list(ProCalculations.fromSmallerUnit("250; 500,5", true));
+        assertEquals(0.25, converted[0], 1e-9);
+        assertEquals(0.5005, converted[1], 1e-9);
+    }
+
+    @Test
+    public void calculatesEveryExampleWithTheInitialSelections() {
+        for (ProModule module : ProModule.values()) {
+            Map<String, String> values = new HashMap<>();
+            for (String definition : module.fields) {
+                String[] field = definition.split(":", 2);
+                String[] defaultValue = field[1].split("=", 2);
+                String initial = field[1].contains("|") ? "0" : defaultValue.length == 2 ? defaultValue[1] : "";
+                values.put(field[0], ProExamples.value(module, field[0], initial));
+            }
+            assertTrue(module.name(), !module.calculate(values).isEmpty());
+        }
+    }
+
     private static Map<String, String> values(String assignments) {
         Map<String, String> values = new HashMap<>();
         for (String assignment : assignments.split(" ")) {

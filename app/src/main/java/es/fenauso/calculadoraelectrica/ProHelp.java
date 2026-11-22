@@ -20,10 +20,10 @@ final class ProHelp {
         return switch (module) {
             case RESISTANCE -> switch (key) {
                 case "mode" -> "Cada opción muestra los campos que necesita. Para una red mixta, calcula primero sus grupos en serie o paralelo.";
-                case "v" -> "Diferencia de potencial entre los bornes. Déjala vacía si conoces I y R.";
-                case "i" -> "Corriente que atraviesa la resistencia. Déjala vacía si conoces V y R.";
-                case "r" -> "Resistencia eléctrica en ohmios. Déjala vacía si conoces V e I.";
-                case "list" -> "Escribe un valor en ohmios por resistencia, separado por punto y coma. Ejemplo: 100; 220; 470.";
+                case "v" -> "Diferencia de potencial entre los bornes. Selecciona V o mV. Déjala vacía si conoces I y R.";
+                case "i" -> "Corriente que atraviesa la resistencia. Selecciona A o mA. Déjala vacía si conoces V y R.";
+                case "r" -> "Resistencia eléctrica. Selecciona Ω o mΩ. Déjala vacía si conoces V e I.";
+                case "list" -> "Selecciona Ω o mΩ para toda la lista. Escribe un valor por resistencia separado por punto y coma. Ejemplo: 100; 220; 470.";
                 case "metal" -> "El material determina la resistividad y cómo cambia con la temperatura.";
                 case "l" -> "Longitud total del conductor que quieres calcular. Si buscas la resistencia de ida y vuelta, suma ambos recorridos.";
                 case "s" -> "Área de la parte conductora en mm², según la ficha del cable.";
@@ -31,7 +31,7 @@ final class ProHelp {
                 default -> throw new IllegalArgumentException(key);
             };
             case REACTIVE -> switch (key) {
-                case "p" -> "Potencia activa que consume la carga en funcionamiento, en kW.";
+                case "p" -> "Potencia activa que consume la carga en funcionamiento. Selecciona kW o W.";
                 case "a" -> "Cos φ medido antes de compensar, entre 0 y 1. En cargas con armónicos, distingue cos φ de factor de potencia total.";
                 case "b" -> "Cos φ que quieres alcanzar. Debe ser igual o superior al inicial.";
                 case "v" -> "Tensión entre fases en trifásica o entre fase y neutro en monofásica.";
@@ -49,7 +49,7 @@ final class ProHelp {
                 default -> throw new IllegalArgumentException(key);
             };
             case ENERGY -> switch (key) {
-                case "p" -> "Potencia media durante las horas de uso. Para convertir vatios a kW, divide entre 1 000.";
+                case "p" -> "Potencia media durante las horas de uso. Selecciona kW o W y la app convierte el valor.";
                 case "h" -> "Promedio de horas de uso al día, entre 0 y 24.";
                 case "d" -> "Número de días del periodo de cálculo.";
                 case "price" -> "Precio por kWh aplicable a las horas introducidas. Si añades impuestos aparte, usa el precio antes de ese impuesto.";

@@ -9,7 +9,6 @@ import android.graphics.Typeface;
 import android.graphics.drawable.GradientDrawable;
 import android.os.Bundle;
 import android.text.Editable;
-import android.text.InputType;
 import android.text.TextWatcher;
 import android.view.Gravity;
 import android.view.View;
@@ -177,6 +176,15 @@ public class MainActivity extends Activity {
         buttonRowLp.setMargins(0,dp(14),0,0);
         form.addView(buttonRow, buttonRowLp);
 
+        Button clear = new Button(this);
+        clear.setText("Vaciar campos");
+        clear.setTextColor(BLUE);
+        clear.setBackground(roundRect(Color.rgb(245,248,255), 10));
+        clear.setOnClickListener(v -> clearFields());
+        LinearLayout.LayoutParams clearLp = new LinearLayout.LayoutParams(-1, dp(48));
+        clearLp.topMargin = dp(8);
+        form.addView(clear, clearLp);
+
         Button calculate = new Button(this);
         calculate.setText("CALCULAR");
         calculate.setTextColor(Color.WHITE);
@@ -290,7 +298,7 @@ public class MainActivity extends Activity {
                 "• LONGITUD: distancia de ida desde el origen hasta la carga. La caída de tensión tiene en cuenta el recorrido eléctrico correspondiente.\n\n" +
                 "• CAÍDA DE TENSIÓN: pérdida de tensión producida en el conductor. Una línea larga puede necesitar más sección aunque soporte la corriente.\n\n" +
                 "MODO BÁSICO / AVANZADO\n\n" +
-                "Para empezar puedes dejar ocultas las opciones avanzadas. La app usa 20 m, 30 °C, 3 %, cobre y PVC como valores iniciales. Si conoces tus condiciones reales, abre OPCIONES AVANZADAS y modifícalas.\n\n" +
+                "Para empezar puedes dejar ocultas las opciones avanzadas. La app usa 20 m, 30 °C, 3 %, cobre y PVC como valores iniciales. Si conoces tus condiciones reales, abre OPCIONES AVANZADAS y modifícalas. Pulsa VACIAR CAMPOS para borrar las cifras o EJEMPLO para cargar un caso de prueba.\n\n" +
                 "IMPORTANTE\n\n" +
                 "El resultado es orientativo. Una instalación real debe comprobarse según método de instalación, agrupamiento, canalización y normativa REBT/UNE aplicable.",
                 15, TEXT, false);
@@ -484,6 +492,15 @@ public class MainActivity extends Activity {
         if (len < 0 || len > 10000) throw new IllegalArgumentException("Revisa la longitud del conductor.");
         if (temp < -50 || temp > 120) throw new IllegalArgumentException("Revisa la temperatura ambiente.");
         if (dropMax <= 0 || dropMax > 20) throw new IllegalArgumentException("La caída de tensión máxima debe ser mayor que 0 % y razonable.");
+    }
+
+    private void clearFields() {
+        for (EditText field : new EditText[]{load, voltage, powerFactor, length, temperature, maxDrop}) {
+            field.setText("");
+        }
+        updateMode();
+        updateLoadConversion();
+        saveValues();
     }
 
     private void resetForm() {
@@ -694,7 +711,7 @@ public class MainActivity extends Activity {
         e.setTextSize(16);
         e.setSingleLine(true);
         e.setPadding(dp(12),0,dp(12),0);
-        e.setInputType(InputType.TYPE_CLASS_NUMBER|InputType.TYPE_NUMBER_FLAG_DECIMAL|InputType.TYPE_NUMBER_FLAG_SIGNED);
+        DecimalInput.configure(e);
         e.setBackground(roundRect(Color.rgb(242,244,247),10));
         e.setLayoutParams(new LinearLayout.LayoutParams(-1,dp(48)));
         return e;

@@ -3,6 +3,7 @@ package es.fenauso.calculadoraelectrica;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.graphics.Color;
+import android.graphics.drawable.GradientDrawable;
 import android.os.Bundle;
 import android.text.Editable;
 import android.text.InputType;
@@ -24,8 +25,11 @@ import java.util.Map;
 public final class ProActivity extends Activity {
     static final String MODULE = "module";
     private static final int NAVY = 0xff16324f;
+    private static final int BLUE = 0xff2563eb;
+    private static final int GREEN = 0xff137a4b;
     private final Map<String, View> inputs = new LinkedHashMap<>();
     private final Map<String, View> rows = new LinkedHashMap<>();
+    private final Map<String, Spinner> units = new LinkedHashMap<>();
     private static final String DRAFTS = "drafts";
     private final Bundle drafts = new Bundle();
     private ProModule module;
@@ -45,6 +49,7 @@ public final class ProActivity extends Activity {
     private void showModule() {
         inputs.clear();
         rows.clear();
+        units.clear();
         result = null;
         Bundle state = drafts.getBundle(module.name());
 
@@ -57,14 +62,18 @@ public final class ProActivity extends Activity {
         TextView heading = text(module.title, 24);
         body.addView(heading);
         body.addView(text(module.help, 15));
-        Button help = new Button(this);
-        help.setText("ⓘ Ayuda del módulo");
-        help.setOnClickListener(v -> showHelp(module.title, ProHelp.overview(module)));
+        Button help = action("ⓘ Ayuda del módulo", false);
+        help.setOnClickListener(v -> showHelp(module.title, ProHelp.overview(module)
+                + "\n\nLos valores iniciales son un ejemplo. Pulsa Vaciar campos para introducir tus propios datos."
+                + "\nUn resultado en verde indica que el cálculo se ejecutó. Lee las comprobaciones pendientes del resultado."));
         body.addView(help);
+        Button clear = action("Vaciar campos", false);
+        clear.setOnClickListener(v -> clearFields());
+        body.addView(clear);
+        body.addView(text("Valores iniciales de ejemplo. Para una instalación real, usa sus datos.", 13));
         for (String field : module.fields) addField(body, field, state);
 
-        Button calculate = new Button(this);
-        calculate.setText("Calcular");
+        Button calculate = action("Calcular", true);
         calculate.setOnClickListener(v -> calculate());
         body.addView(calculate);
         result = text("", 16);
@@ -119,20 +128,95 @@ public final class ProActivity extends Activity {
             input.setSingleLine(true);
 
             boolean freeText = key.equals("list") || key.equals("method") || key.equals("scheme");
-            input.setInputType(freeText ? InputType.TYPE_CLASS_TEXT
-                    : InputType.TYPE_CLASS_NUMBER | InputType.TYPE_NUMBER_FLAG_SIGNED | InputType.TYPE_NUMBER_FLAG_DECIMAL);
-            input.setText(state == null ? (field.length == 2 ? field[1] : "") : state.getString(key, ""));
+            if (freeText) {
+                input.setInputType(InputType.TYPE_CLASS_TEXT);
+                if (key.equals("list")) DecimalInput.addLeadingZero(input);
+            } else {
+                DecimalInput.configure(input);
+            }
+            String example = ProExamples.value(module, key, field.length == 2 ? field[1] : "");
+            input.setText(state == null ? example : state.getString(key, ""));
             input.addTextChangedListener(new TextWatcher() {
                 @Override public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
                 @Override public void onTextChanged(CharSequence s, int start, int before, int count) { clearResult(); }
                 @Override public void afterTextChanged(Editable s) {}
             });
             inputs.put(key, input);
-            addFieldLabel(row, input, field[0], key);
-            row.addView(input);
+            String title = unitChoices(key) == null ? field[0] : field[0].replaceFirst(" \\((V|A|Ω|kW)\\)", "");
+            addFieldLabel(row, input, title, key);
+            addInput(row, input, key, state);
         }
         rows.put(key, row);
         body.addView(row, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
+    }
+
+    private Button action(String label, boolean primary) {
+        Button button = new Button(this);
+        button.setText(label);
+        button.setTextColor(primary ? Color.WHITE : BLUE);
+        GradientDrawable background = new GradientDrawable();
+        background.setColor(primary ? BLUE : 0xfff5f8ff);
+        background.setCornerRadius(dp(primary ? 14 : 10));
+        button.setBackground(background);
+        button.setMinimumHeight(dp(48));
+        LinearLayout.LayoutParams layout = new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        layout.bottomMargin = dp(6);
+        button.setLayoutParams(layout);
+        return button;
+    }
+
+    private void clearFields() {
+        for (View field : inputs.values()) {
+            if (field instanceof EditText) ((EditText) field).setText("");
+        }
+        clearResult();
+    }
+
+    private void addInput(LinearLayout row, EditText input, String key, Bundle state) {
+        String[] choices = unitChoices(key);
+        if (choices == null) {
+            row.addView(input);
+            return;
+        }
+        LinearLayout line = new LinearLayout(this);
+        line.setGravity(android.view.Gravity.CENTER_VERTICAL);
+        line.addView(input, new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1));
+        Spinner spinner = new Spinner(this);
+        spinner.setContentDescription("Unidad de " + choices[0]);
+        ArrayAdapter<String> adapter = new ArrayAdapter<>(this, android.R.layout.simple_spinner_item, choices);
+        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        spinner.setAdapter(adapter);
+        spinner.setSelection(state == null ? 0 : state.getInt("unit." + key));
+        spinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            @Override public void onItemSelected(AdapterView<?> p, View v, int pos, long id) { clearResult(); }
+            @Override public void onNothingSelected(AdapterView<?> p) {}
+        });
+        units.put(key, spinner);
+        line.addView(spinner, new LinearLayout.LayoutParams(dp(108), dp(48)));
+        row.addView(line);
+    }
+
+    private String[] unitChoices(String key) {
+        if (module == ProModule.RESISTANCE) {
+            return switch (key) {
+                case "v" -> new String[]{"V", "mV"};
+                case "i" -> new String[]{"A", "mA"};
+                case "r", "list" -> new String[]{"Ω", "mΩ"};
+                default -> null;
+            };
+        }
+        return (module == ProModule.REACTIVE || module == ProModule.ENERGY) && key.equals("p")
+                ? new String[]{"kW", "W"} : null;
+    }
+
+    private void normalizeUnits(Map<String, String> values) {
+        for (Map.Entry<String, Spinner> unit : units.entrySet()) {
+            String key = unit.getKey();
+            if (unit.getValue().getSelectedItemPosition() != 1
+                    || rows.get(key).getVisibility() != View.VISIBLE || values.get(key).trim().isEmpty()) continue;
+            values.put(key, ProCalculations.fromSmallerUnit(values.get(key), key.equals("list")));
+        }
     }
 
     private void addFieldLabel(LinearLayout row, View control, String title, String key) {
@@ -180,8 +264,9 @@ public final class ProActivity extends Activity {
         inputs.forEach((key, view) -> values.put(key, view instanceof Spinner
                 ? Integer.toString(((Spinner) view).getSelectedItemPosition()) : ((EditText) view).getText().toString()));
         try {
+            normalizeUnits(values);
             result.setText(module.calculate(values));
-            result.setTextColor(NAVY);
+            result.setTextColor(GREEN);
         } catch (NumberFormatException e) {
             result.setText("Revisa el formato numérico. Usa coma o punto decimal y separa los valores de una lista con punto y coma.");
             result.setTextColor(0xffa42318);
@@ -210,6 +295,7 @@ public final class ProActivity extends Activity {
             if (view instanceof Spinner) state.putInt(key, ((Spinner) view).getSelectedItemPosition());
             else state.putString(key, ((EditText) view).getText().toString());
         });
+        units.forEach((key, spinner) -> state.putInt("unit." + key, spinner.getSelectedItemPosition()));
         drafts.putBundle(module.name(), state);
     }
 
