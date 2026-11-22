@@ -265,7 +265,8 @@ public final class ProActivity extends Activity {
                 ? Integer.toString(((Spinner) view).getSelectedItemPosition()) : ((EditText) view).getText().toString()));
         try {
             normalizeUnits(values);
-            result.setText(module.calculate(values));
+            String answer = module.calculate(values);
+            result.setText(CalculationResult.format(answer.startsWith("# ") ? answer : "# Resultado\n" + answer));
             result.setTextColor(GREEN);
         } catch (NumberFormatException e) {
             result.setText("Revisa el formato numérico. Usa coma o punto decimal y separa los valores de una lista con punto y coma.");

@@ -97,7 +97,7 @@ final class ProExamples {
     private ProExamples() {}
 
     static String value(ProModule module, String key, String fallback) {
-        return VALUES.get(module).getOrDefault(key, fallback);
+        return VALUES.getOrDefault(module, java.util.Collections.emptyMap()).getOrDefault(key, fallback);
     }
 
     private static void add(ProModule module, String... settings) {

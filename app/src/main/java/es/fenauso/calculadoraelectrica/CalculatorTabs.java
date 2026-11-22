@@ -79,6 +79,7 @@ final class CalculatorTabs {
             case CONDUIT -> "Tubos";
             case ENERGY -> "Consumo";
             case SOLAR -> "Strings FV";
+            case PV_PROTECTION -> "Protecciones FV";
             case DC -> "Cable CC";
             case BATTERY -> "Baterías";
             case EV -> "Recarga VE";

@@ -407,14 +407,14 @@ public class MainActivity extends Activity {
                                 : "\n" + f(in) + " A > " + f(iz) + " A");
 
                 showStatus(status,
-                        (status==Status.GOOD ? "✓ COMBINACIÓN COHERENTE" : "⚠ REVISAR COMBINACIÓN") +
+                        (status==Status.GOOD ? "# Combinación coherente" : "# Revisar combinación") +
                         (protectionValid ? "\n\nCarga máxima: " : "\n\nLímite teórico de carga: ") +
-                        whole(pMax) + " W  ≈ " + f(iMax) + " A" +
+                        whole(pMax) + " W\nIntensidad máxima: " + f(iMax) + " A" +
                         "\nMagnetotérmico: " + f(in) + " A" +
-                        "\nCable:          " + sectionText(sec) + "  (Iz ≈ " + f(iz) + " A)" +
+                        "\nCable:          " + sectionText(sec) + "\nIz del cable: " + f(iz) + " A" +
                         "\nCaída tensión:  " + f(pct) + " %  (máx. " + f(dropMax) + " %)" +
                         "\n\n" + comparison +
-                        "\n\n" + simple);
+                        "\n~ " + simple);
 
                 lastExplanation = "El cálculo toma el menor límite de corriente entre el magnetotérmico, la capacidad corregida del cable y la caída de tensión máxima. " +
                         "Con los datos introducidos, la app obtiene aproximadamente " + f(iMax) + " A, equivalentes a " + whole(pMax) + " W. " +
@@ -437,8 +437,8 @@ public class MainActivity extends Activity {
                 boolean breakerOk = rec > 0;
                 Status status = breakerOk && dropOk ? Status.GOOD : (breakerOk ? Status.WARNING : Status.BAD);
 
-                String headline = rec > 0 ? "MAGNETOTÉRMICO RECOMENDADO: " + f(rec) + " A" : "✕ SIN CALIBRE VÁLIDO";
-                String translation = "Carga: " + f(iLoad) + " A  ≈ " + whole(pLoad) + " W";
+                String headline = rec > 0 ? "# Dimensionamiento de la protección\nMagnetotérmico recomendado: " + f(rec) + " A" : "✕ SIN CALIBRE VÁLIDO";
+                String translation = "Carga: " + f(iLoad) + " A\nPotencia equivalente: " + whole(pLoad) + " W";
                 String plain;
                 if (!breakerOk) plain = "La sección elegida no permite un calibre comercial adecuado para esa carga.";
                 else if (!dropOk) plain = "La protección es posible, pero la caída de tensión aconseja aumentar la sección del cable.";
@@ -448,7 +448,7 @@ public class MainActivity extends Activity {
                         "\nIz cable: " + f(iz) + " A" +
                         "\nCaída tensión: " + f(pct) + " %  (máx. " + f(dropMax) + " %)" +
                         (rec > 0 ? "\n\n" + f(iLoad) + " A ≤ " + f(rec) + " A ≤ " + f(iz) + " A" : "") +
-                        "\n\n" + plain);
+                        "\n~ " + plain);
 
                 lastExplanation = "La app busca un calibre comercial que sea igual o superior a la corriente de carga (" + f(iLoad) + " A) y que, al mismo tiempo, no supere la capacidad corregida del cable (" + f(iz) + " A). " +
                         (dropOk ? "Además, la caída de tensión cumple el límite introducido." : "La caída de tensión no cumple el límite introducido, por eso aparece una advertencia.");
@@ -457,7 +457,7 @@ public class MainActivity extends Activity {
                 double recSec = ElectricalCalculator.recommendSection(iLoad,in,v,len,dropMax,mat,ins,temp,ph);
                 if (recSec < 0) {
                     showStatus(Status.BAD,
-                            "✕ SIN SECCIÓN VÁLIDA EN LA TABLA\n\nCarga: " + f(iLoad) + " A  ≈ " + whole(pLoad) + " W\nMagnetotérmico: " + f(in) + " A\n\nComprueba que la carga no supera el magnetotérmico o revisa los datos.");
+                            "✕ SIN SECCIÓN VÁLIDA EN LA TABLA\n\nCarga: " + f(iLoad) + " A\nPotencia equivalente: " + whole(pLoad) + " W\nMagnetotérmico: " + f(in) + " A\n\nComprueba que la carga no supera el magnetotérmico o revisa los datos.");
                     lastExplanation = "Para poder proteger correctamente el circuito debe cumplirse primero que la corriente de carga no sea mayor que la corriente nominal del magnetotérmico. Después, el cable debe soportar al menos esa protección y cumplir la caída de tensión indicada.";
                     whyButton.setVisibility(View.VISIBLE);
                     return;
@@ -467,8 +467,8 @@ public class MainActivity extends Activity {
                 double pct = ElectricalCalculator.voltageDropPercent(iLoad,v,len,recSec,mat,ph);
 
                 showStatus(Status.GOOD,
-                        "✓ CONDUCTOR RECOMENDADO: " + sectionText(recSec) +
-                        "\n\nCarga:          " + f(iLoad) + " A  ≈ " + whole(pLoad) + " W" +
+                        "# Dimensionamiento del conductor\nSección recomendada: " + sectionText(recSec) +
+                        "\n\nCarga:          " + f(iLoad) + " A\nPotencia equivalente: " + whole(pLoad) + " W" +
                         "\nMagnetotérmico: " + f(in) + " A" +
                         "\nIz cable:       " + f(iz) + " A" +
                         "\nCaída tensión:  " + f(pct) + " %" +
@@ -581,7 +581,7 @@ public class MainActivity extends Activity {
         else if (status == Status.WARNING) { fg = AMBER; bg = Color.rgb(255,249,235); }
         else if (status == Status.BAD) { fg = RED; bg = Color.rgb(254,243,242); }
         else { fg = NAVY; bg = Color.WHITE; }
-        result.setText(message);
+        result.setText(CalculationResult.format(message));
         result.setTextColor(fg);
         result.setBackground(roundRect(bg,14));
     }
@@ -748,7 +748,7 @@ public class MainActivity extends Activity {
         return Double.parseDouble(s);
     }
     private String f(double d){ return String.format(Locale.getDefault(),"%.2f",d); }
-    private String whole(double d){ return String.format(Locale.getDefault(),"%.0f",d); }
-    private String sectionText(double d){ return (d%1==0?String.format(Locale.getDefault(),"%.0f",d):String.format(Locale.getDefault(),"%.1f",d))+" mm²"; }
+    private String whole(double d){ return String.format(Locale.getDefault(),"%.2f",d); }
+    private String sectionText(double d){ return (d%1==0?String.format(Locale.getDefault(),"%.2f",d):String.format(Locale.getDefault(),"%.1f",d))+" mm²"; }
     private int dp(int v){ return Math.round(v*getResources().getDisplayMetrics().density); }
 }

@@ -48,8 +48,8 @@ final class ConduitSizing {
         return "Superficie ocupada: " + show(Math.PI * sum / 4) + " mm²\nDiámetro interior mínimo: "
                 + show(required) + " mm\nÁrea interior ≥ " + show(factor) + " × área ocupada."
                 + (proposed > 0 ? "\nOcupación del tubo indicado: " + show(100 * sum / (proposed * proposed)) + " %"
-                        + (proposed >= required ? " · cumple el criterio de ocupación." : " · supera la ocupación permitida.") : "")
-                + "\nAplica a secciones distintas o más de " + (mode == 3 ? 10 : 5)
+                        + (proposed >= required ? "\n~ Cumple el criterio de ocupación." : "\n~ Supera la ocupación permitida.") : "")
+                + "\n~ Aplica a secciones distintas o más de " + (mode == 3 ? 10 : 5)
                 + " conductores. Para conductores iguales dentro del rango, usa la tabla.";
     }
 

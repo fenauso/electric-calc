@@ -22,10 +22,10 @@ final class CableSizing {
         if (section > 0) {
             double volts = factor * rho * length * current / section;
             double percent = 100 * volts / voltage;
-            result += "\nCaída estimada con " + show(section) + " mm²: " + show(volts) + " V ("
-                    + show(percent) + " %). " + (percent <= limit ? "Dentro del límite asignado." : "Supera el límite asignado.");
+            result += "\nCaída estimada con " + show(section) + " mm²: " + show(volts) + " V\nCaída porcentual: "
+                    + show(percent) + " %\n~ " + (percent <= limit ? "Dentro del límite asignado." : "Supera el límite asignado.");
             if (specifiedSection && section < regulatoryMinimum) result += "\nLa sección indicada es inferior al mínimo reglamentario.";
-            if (iz > 0) result += "\nIz declarada: " + show(iz) + " A. "
+            if (iz > 0) result += "\nIz declarada: " + show(iz) + " A\n~ "
                     + (iz >= requiredIz ? "Alcanza la Iz requerida." : "Insuficiente para la Iz requerida.");
         }
         if (iz == 0 || !x.has("method")) {

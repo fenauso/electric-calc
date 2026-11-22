@@ -31,9 +31,30 @@ enum ProModule {
             "max:Tensión CC máxima efectiva de equipos y módulos (V)",
             "start:Tensión de arranque del inversor (V)", "low:MPPT mínimo (V)", "high:MPPT máximo (V)",
             "imax:Intensidad operativa máxima por MPPT (A)", "scmax:Isc máxima por MPPT (A)",
-            "inputs:Entradas físicas por MPPT", "mppt:MPPT utilizados",
+            "inputs:Entradas físicas por MPPT", "mppt:MPPT utilizados", "trackers:MPPT disponibles (opcional)",
+            "target:Potencia FV objetivo (kWp, opcional)",
             "ac:Potencia nominal CA (kW)", "pmax:Potencia FV máxima admitida (kWp, opcional)",
             "ns:Módulos en serie", "np:Strings por MPPT", "fuse:Fusible serie máximo del módulo (A, opcional)"),
+    PV_PROTECTION("Fotovoltaica · protecciones", "Usa los valores de diseño del string y la ficha del inversor. Las cifras iniciales son ilustrativas.",
+            "voc:Voc máxima del string corregida (V)=358",
+            "isc:Isc máxima de un string (A)=14,8",
+            "parallel:Strings eléctricamente en paralelo=2",
+            "feed:Aporte inverso adicional (A, opcional)=0",
+            "reverse:Corriente inversa admisible del módulo (A, opcional)=12",
+            "fuse:Fusible serie máximo declarado (A, opcional)=25",
+            "fuseselect:Fusible gPV instalado o previsto (A, opcional)=25",
+            "mindc:Calibre mínimo de diseño por string (A, opcional)=22,2",
+            "izdc:Iz corregida del cable CC por string (A, opcional)=28",
+            "maxdc:Máximo del automático CC si el fabricante lo admite (A, opcional)",
+            "phase:Salida monofásica 230 V|Salida trifásica 400 V",
+            "ac:Potencia nominal CA (kW)=5",
+            "iac:Corriente máxima CA de ficha (A, opcional)=22",
+            "izac:Iz corregida del cable CA (A, opcional)=34",
+            "maxac:Calibre máximo permitido por el fabricante (A, opcional)=32",
+            "fault:Cortocircuito máximo previsto en origen CA (kA, opcional)=4",
+            "rcd:Diferencial según fabricante sin verificar|Fabricante admite tipo A|Fabricante exige otra solución",
+            "site:En zona residencial o análoga|En otro emplazamiento",
+            "spd:Riesgo de sobretensiones sin evaluar|El estudio exige tipo 2|El estudio exige tipo 1 o combinado 1+2|El estudio no exige protector adicional"),
     DC("Fotovoltaica · cable CC", "Calcula un tramo CC de dos conductores. Introduce la intensidad de diseño del tramo con el criterio aplicable.",
             "v:Tensión de trabajo del tramo (V)", "i:Intensidad de servicio (A)", "ib:Intensidad de diseño (A)",
             "l:Longitud de ida (m)", "max:Caída asignada al tramo (%)", "metal:Cobre|Aluminio",
@@ -85,6 +106,7 @@ enum ProModule {
             case CONDUIT -> ConduitSizing.calculate(x);
             case ENERGY -> energy(x);
             case SOLAR -> SolarSizing.strings(x);
+            case PV_PROTECTION -> PvProtection.calculate(x);
             case DC -> dc(x);
             case BATTERY -> SolarSizing.battery(x);
             case EV -> EvSizing.calculate(x);
@@ -111,7 +133,7 @@ enum ProModule {
         if (!x.has("v")) v = i * r;
         if (!x.has("i")) i = v / r;
         if (!x.has("r")) r = v / i;
-        return show(v) + " V · " + show(i) + " A · " + show(r) + " Ω\nPotencia disipada: "
+        return "# Ley de Ohm\nTensión: " + show(v) + " V\nIntensidad: " + show(i) + " A\nResistencia: " + show(r) + " Ω\nPotencia disipada: "
                 + show(v * i) + " W\nV = I · R; P = V · I";
     }
 
@@ -141,9 +163,9 @@ enum ProModule {
         double length = x.nonnegative("l"), drop = x.positive("max"), rho = x.option("metal") == 0 ? 0.0225 : 0.036;
         double minimum = minimumSection(voltage, length, current, drop, rho, 2, 0);
         return CableSizing.result(x, voltage, current, design, length, rho, 2, drop, minimum, 0)
-                + "\nΔV = 2 · ρ · L · I / S. Caída a corriente de servicio.\n"
+                + "\n~ ΔV = 2 · ρ · L · I / S. Caída a corriente de servicio.\n"
                 + "Pendiente: verificar tensión asignada, cortocircuito y protecciones CC del tramo. "
-                + "Si aplica ITC-BT-40 §5, verifica el 125 % de intensidad y el 1,5 % hasta el punto de interconexión.";
+                + "Si aplica ITC-BT-40, apartado 5, verifica el 125 % de intensidad y el 1,5 % hasta el punto de interconexión.";
     }
 
     static final class Input {

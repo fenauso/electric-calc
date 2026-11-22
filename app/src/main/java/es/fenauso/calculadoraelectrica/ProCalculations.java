@@ -28,7 +28,7 @@ final class ProCalculations {
 
     static String show(double value) {
         if (!Double.isFinite(value)) throw new IllegalArgumentException("El resultado está fuera del rango de cálculo.");
-        return String.format(Locale.getDefault(), "%,.3f", value);
+        return String.format(Locale.getDefault(), "%,.2f", value);
     }
 
     static double decimal(String value) {

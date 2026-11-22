@@ -32,15 +32,15 @@ final class EvSizing {
         }
         double iz = x.optionalPositive("iz");
         boolean rdcVerified = x.option("rdc") == 1 || x.option("rdc") == 2;
-        String result = "Intensidad de diseño: " + show(current) + " A"
-                + (configured > 0 ? " · corriente configurada." : three ? " · I = P / (√3 · V · FP)." : " · I = P / (V · FP).")
+        String result = "# Línea de recarga\nIntensidad de diseño: " + show(current) + " A"
+                + (configured > 0 ? "\n~ Se usa la corriente configurada." : three ? "\n~ I = P / (√3 · V · FP)." : "\n~ I = P / (V · FP).")
                 + "\n" + CableSizing.result(x, voltage, current, breaker > 0 ? breaker : current,
                         length, rho, factor, limit, minimum, regulatory)
                 + "\nCaída aproximada resistiva. Si la reactancia es relevante, verifica con los datos R/X del cable."
-                + "\n\nProtecciones · ITC-BT-52 §§6.1, 6.3 y 6.4"
+                + "\n\n# Protecciones (ITC-BT-52, apartados 6.1, 6.3 y 6.4)"
                 + (breaker > 0 ? "\nMagnetotérmico candidato: curva C, corte omnipolar, " + show(breaker) + " A."
                     : "\nNo hay calibre suficiente en el catálogo de la app.")
-                + (breaker > 0 && iz > 0 && iz < breaker ? " La Iz indicada es insuficiente para ese calibre." : "")
+                + (breaker > 0 && iz > 0 && iz < breaker ? "\n~ La Iz indicada es insuficiente para ese calibre." : "")
                 + "\nPendiente: poder de corte, corriente mínima de defecto y coordinación con la línea."
                 + "\nDiferencial individual ≤ 30 mA: "
                 + (rdcVerified ? "tipo A con el RDC-DD declarado, o tipo B compatible con el equipo."
@@ -49,7 +49,7 @@ final class EvSizing {
                 + (x.option("spd") == 0 ? " Pendiente: verificar dispositivos aguas arriba y su coordinación."
                     : " Verifica coordinación y cobertura de los dispositivos declarados.")
                 + (x.has("distance") && x.nonnegative("distance") >= 10
-                    ? " A 10 m o más, la guía recomienda valorar protección transitoria tipo 2 cerca del punto." : "")
+                    ? "\n~ A 10 m o más, la guía recomienda valorar protección transitoria tipo 2 cerca del punto." : "")
                 + (x.option("out") == 1 ? "\nExterior: comprobar envolvente, canalización y cable de alimentación 0,6/1 kV." : "")
                 + "\nEsquema: " + (x.has("scheme") ? x.text("scheme") : "pendiente de indicar según ITC-BT-52.");
         if (!x.has("kwh")) return result + "\n\nTiempo de carga pendiente: introduce la capacidad útil del vehículo.";
@@ -59,9 +59,9 @@ final class EvSizing {
         double available = Math.min(kw, current * voltage * pf * (three ? Math.sqrt(3) : 1) / 1000);
         if (x.has("car")) available = Math.min(available, x.positive("car"));
         if (x.has("grid")) available = Math.min(available, x.positive("grid"));
-        return result + "\n\nEnergía a reponer: " + show(energy) + " kWh"
+        return result + "\n# Tiempo de recarga\nEnergía a reponer: " + show(energy) + " kWh"
                 + "\nTiempo estimado: " + show(energy / (available * fraction(x.number("eta"), "Rendimiento de carga"))) + " h"
-                + "\nt = energía / (potencia disponible × rendimiento)."
+                + "\n~ t = energía / (potencia disponible × rendimiento)."
                 + (!x.has("car") || !x.has("grid") ? " Estimación parcial: falta límite del vehículo o potencia disponible." : "");
     }
 }

@@ -86,6 +86,24 @@ public class ProCalculationsTest {
         }
     }
 
+    @Test
+    public void sizesParallelAndMixedLayoutsForAnInverterTarget() {
+        String result = SolarSizing.configurations(400, 1.2, 1, 2, 1, 8, 3, 1);
+        assertTrue(result.contains("# Paralelo por MPPT\nNúmero de paneles: 3"));
+        assertTrue(result.contains("# Serie y paralelo por MPPT\nNúmero de paneles: 4"));
+    }
+
+    @Test
+    public void comparesPvFuseAndSizesAcBreakerFromDeclaredLimits() {
+        String result = ProModule.PV_PROTECTION.calculate(values("voc=350 isc=15 parallel=2 feed=0 reverse=12"
+                + " fuse=25 fuseselect=32 mindc=22 izdc=28 phase=0 ac=5 iac=22 izac=34 maxac=32"
+                + " fault=4 rcd=1 site=0 spd=1"));
+        assertTrue(result.contains("necesaria por el criterio de corriente inversa"));
+        assertTrue(result.contains("Fusible gPV candidato si procede: 25 A"));
+        assertTrue(result.contains("fuera del intervalo calculado"));
+        assertTrue(result.contains("Magnetotérmico CA: " + ProCalculations.show(25)));
+    }
+
     private static Map<String, String> values(String assignments) {
         Map<String, String> values = new HashMap<>();
         for (String assignment : assignments.split(" ")) {

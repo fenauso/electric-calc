@@ -10,6 +10,7 @@ final class ProHelp {
             case CONDUIT -> "La ITC-BT-21 distingue el diámetro exterior nominal de la tabla y el diámetro interior libre del cálculo de ocupación. Elige el criterio que corresponda y comprueba también las características mecánicas del tubo.";
             case ENERGY -> "Calcula energía y coste para un periodo con un precio por kWh. Si tienes varias tarifas, calcula cada periodo y suma los costes de energía; incorpora los términos fijos y los impuestos una sola vez.";
             case SOLAR -> "Copia los valores de las fichas del módulo y del inversor. El cálculo prueba los límites de tensión y corriente para MPPT idénticos con el mismo reparto. Repite por separado para grupos con características distintas y comprueba después los límites del inversor completo.";
+            case PV_PROTECTION -> "Evalúa la corriente inversa y compara el fusible del string. En CA, contrasta el magnetotérmico, el diferencial y las comprobaciones pendientes. Para sobretensiones introduce el resultado del estudio del emplazamiento.";
             case DC -> "Calcula la sección mínima por caída para un tramo CC. Puedes comprobar también una sección e intensidad admisible conocidas. El cálculo mantiene separadas la caída, el criterio térmico y las protecciones pendientes.";
             case BATTERY -> "Empieza por el consumo en CA y la autonomía. La app estima la capacidad del banco, las ramas necesarias para atender el pico de descarga y las horas equivalentes de recarga. Contrasta tensiones y límites con los fabricantes de la batería y el inversor.";
             case EV -> "Dimensiona el circuito dedicado de un punto de recarga CA modo 3. Indica las fases que usa el punto, los datos de la línea y las protecciones documentadas. La estimación de tiempo usa la potencia disponible y la energía que falta en la batería.";
@@ -76,12 +77,37 @@ final class ProHelp {
                 case "imax" -> "Corriente de funcionamiento máxima admitida por cada MPPT, en amperios.";
                 case "scmax" -> "Límite de corriente de cortocircuito publicado por MPPT. Puede ser distinto del límite operativo.";
                 case "inputs" -> "Número de conexiones físicas de string por cada MPPT según la ficha.";
+                case "trackers" -> "Número de MPPT idénticos disponibles para explorar alternativas. Si queda vacío, se usa el número utilizado.";
+                case "target" -> "Potencia pico mínima deseada en kWp. Si queda vacía se toma como referencia la potencia nominal CA del inversor.";
                 case "mppt" -> "Número de seguidores MPPT utilizados con este mismo reparto de módulos y strings.";
                 case "ac" -> "Potencia activa nominal de salida del inversor en kW.";
                 case "pmax" -> "Potencia pico FV máxima que admite el fabricante para la configuración indicada. Déjala vacía si ese dato no está disponible.";
                 case "ns" -> "Número de módulos conectados en serie en cada string. En serie se suman las tensiones.";
                 case "np" -> "Número de strings en paralelo por MPPT. En paralelo se suman las corrientes.";
                 case "fuse" -> "Calibre máximo del fusible serie autorizado por el fabricante del módulo. Se muestra como dato de comprobación.";
+                default -> throw new IllegalArgumentException(key);
+            };
+            case PV_PROTECTION -> switch (key) {
+                case "voc" -> "Copia la Voc máxima del string calculada a la temperatura más desfavorable.";
+                case "isc" -> "Usa la corriente de cortocircuito de diseño de un solo string, con las correcciones de irradiancia y temperatura aplicables.";
+                case "parallel" -> "Cuenta las ramas con conexión eléctrica común que pueden alimentar el defecto, sin sumar MPPT independientes.";
+                case "feed" -> "Introduce el aporte de otras fuentes en CC en el escenario de fallo. Usa cero solo si está verificado.";
+                case "reverse" -> "Comprueba el límite de corriente inversa en la documentación. Es un dato distinto del fusible máximo.";
+                case "fuse" -> "Límite del fabricante para el fusible serie del módulo.";
+                case "fuseselect" -> "Calibre del fusible que se quiere contrastar con el intervalo obtenido.";
+                case "mindc" -> "Usa el mínimo definido por el método aplicable y por el fabricante, incluidas las correcciones del dispositivo.";
+                case "maxdc" -> "Introduce el calibre máximo documentado para un automático FV si se admite como alternativa al fusible. Déjalo vacío si no está verificado.";
+                case "izdc" -> "Intensidad admisible corregida del conductor de la rama protegida.";
+                case "phase" -> "Fases de salida del inversor. Si falta la intensidad máxima de ficha, permite estimar la nominal con la potencia.";
+                case "ac" -> "Potencia activa nominal del inversor. El cálculo alternativo supone un factor de potencia de 1.";
+                case "iac" -> "Intensidad máxima de salida según el fabricante. Tiene prioridad sobre la estimación por potencia.";
+                case "izac" -> "Intensidad admisible del conductor de salida, con el montaje y las correcciones aplicables.";
+                case "maxac" -> "Límite de protección CA de la ficha o del manual del inversor.";
+                case "fault" -> "Valor calculado o declarado para comprobar el poder de corte mínimo del automático CA.";
+                case "rcd" -> "Confirma el tipo de diferencial con el fabricante. El apartado 4.3 de la ITC-BT-40 prevé tipo A para instalaciones próximas al consumo.";
+                case "site" -> "En zona residencial o análoga, la ITC-BT-40 establece sensibilidad de 30 mA para circuitos de generación.";
+                case "rcd" -> "Diferencial según fabricante";
+            case "spd" -> "Selecciona el resultado de la evaluación de sobretensiones y de la coordinación con dispositivos instalados. Verifica ambos lados por separado.";
                 default -> throw new IllegalArgumentException(key);
             };
             case DC -> switch (key) {
@@ -132,7 +158,8 @@ final class ProHelp {
                 case "iz" -> "Intensidad admisible ya corregida del cable de esa sección. Sirve para contrastar el calibre candidato.";
                 case "method" -> "Anota montaje, aislamiento, agrupamiento, temperatura y conductores cargados que justifican el dato de Iz.";
                 case "rdc" -> "Comprueba en la documentación si hay un RDC-DD conforme a IEC 62955, integrado o externo, antes de seleccionar diferencial tipo A.";
-                case "spd" -> "Indica si existen protecciones documentadas contra sobretensiones temporales y transitorias aguas arriba.";
+                case "rcd" -> "Diferencial según fabricante";
+            case "spd" -> "Indica si existen protecciones documentadas contra sobretensiones temporales y transitorias aguas arriba.";
                 case "distance" -> "Distancia desde el protector transitorio aguas arriba hasta la estación, útil para valorar una protección adicional cercana.";
                 case "kwh" -> "Capacidad útil de la batería del vehículo, en kWh. Este campo activa la estimación de tiempo.";
                 case "from" -> "Estado de carga al enchufar el vehículo, de 0 a 100 %.";
@@ -160,6 +187,7 @@ final class ProHelp {
             case "site" -> "Emplazamiento";
             case "out" -> "Interior o exterior";
             case "rdc" -> "Detección de fuga en continua";
+            case "rcd" -> "Diferencial según fabricante";
             case "spd" -> "Protecciones contra sobretensiones";
             default -> throw new IllegalArgumentException(key);
         };
