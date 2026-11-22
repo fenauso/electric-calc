@@ -7,6 +7,7 @@ import android.text.style.ForegroundColorSpan;
 import android.text.style.StyleSpan;
 
 final class CalculationResult {
+    static final int ALERT = 0xffa42318;
     private static final int HEADING = 0xff16324f;
 
     private CalculationResult() {}
@@ -30,7 +31,12 @@ final class CalculationResult {
                 out.setSpan(new StyleSpan(Typeface.ITALIC), start, out.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
                 continue;
             }
+            boolean alert = line.startsWith("! ");
+            if (alert) line = FieldIssues.message(line);
             out.append(line);
+            if (alert) {
+                out.setSpan(new ForegroundColorSpan(ALERT), start, out.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+            }
             int colon = line.indexOf(':');
             if (colon > 0) bold(out, start, start + colon + 1);
         }

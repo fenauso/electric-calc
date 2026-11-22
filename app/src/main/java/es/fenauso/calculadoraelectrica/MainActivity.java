@@ -79,11 +79,8 @@ public class MainActivity extends Activity {
         root.addView(topTools, topToolsLp);
 
         TextView help = smallAction("ⓘ AYUDA");
-        TextView example = smallAction("▶ EJEMPLO");
         topTools.addView(help, weightedEnd(dp(5)));
-        topTools.addView(example, weightedStart(dp(5)));
         help.setOnClickListener(v -> showHelp());
-        example.setOnClickListener(v -> loadExample());
 
         form = card();
         form.setPadding(dp(14),dp(14),dp(14),dp(14));
@@ -181,9 +178,14 @@ public class MainActivity extends Activity {
         clear.setTextColor(BLUE);
         clear.setBackground(roundRect(Color.rgb(245,248,255), 10));
         clear.setOnClickListener(v -> clearFields());
+        TextView example = smallAction("▶ EJEMPLO");
+        example.setOnClickListener(v -> loadExample());
+        LinearLayout clearRow = new LinearLayout(this);
         LinearLayout.LayoutParams clearLp = new LinearLayout.LayoutParams(-1, dp(48));
         clearLp.topMargin = dp(8);
-        form.addView(clear, clearLp);
+        clearRow.addView(clear, weightedEnd(dp(5), dp(48), 1f));
+        clearRow.addView(example, weightedStart(dp(5), dp(48), 1f));
+        form.addView(clearRow, clearLp);
 
         Button calculate = new Button(this);
         calculate.setText("CALCULAR");
@@ -330,6 +332,7 @@ public class MainActivity extends Activity {
     }
 
     private void loadExample() {
+        clearFieldMarks();
         invalidateCalculation();
         mode.setSelection(0);
         phase.setSelection(0);
@@ -370,7 +373,9 @@ public class MainActivity extends Activity {
     }
 
     private void calculate() {
+        clearFieldMarks();
         hasCalculationResult = true;
+        if (showMissingFields()) return;
         try {
             double v = num(voltage);
             double pf = num(powerFactor);
@@ -397,6 +402,10 @@ public class MainActivity extends Activity {
                 double pct = ElectricalCalculator.voltageDropPercent(iMax,v,len,sec,mat,ph);
                 double pMax = ElectricalCalculator.powerFromCurrent(iMax,v,pf,ph);
                 boolean protectionValid = in <= iz;
+                if (!protectionValid) {
+                    markChoice(breaker);
+                    markChoice(section);
+                }
                 Status status = protectionValid ? Status.GOOD : Status.WARNING;
 
                 String simple = protectionValid
@@ -414,7 +423,7 @@ public class MainActivity extends Activity {
                         "\nCable:          " + sectionText(sec) + "\nIz del cable: " + f(iz) + " A" +
                         "\nCaída tensión:  " + f(pct) + " %  (máx. " + f(dropMax) + " %)" +
                         "\n\n" + comparison +
-                        "\n~ " + simple);
+                        (protectionValid ? "\n~ " + simple : FieldIssues.warning("", simple)));
 
                 lastExplanation = "El cálculo toma el menor límite de corriente entre el magnetotérmico, la capacidad corregida del cable y la caída de tensión máxima. " +
                         "Con los datos introducidos, la app obtiene aproximadamente " + f(iMax) + " A, equivalentes a " + whole(pMax) + " W. " +
@@ -436,6 +445,7 @@ public class MainActivity extends Activity {
                 boolean dropOk = pct <= dropMax;
                 boolean breakerOk = rec > 0;
                 Status status = breakerOk && dropOk ? Status.GOOD : (breakerOk ? Status.WARNING : Status.BAD);
+                if (!breakerOk || !dropOk) markChoice(section);
 
                 String headline = rec > 0 ? "# Dimensionamiento de la protección\nMagnetotérmico recomendado: " + f(rec) + " A" : "✕ SIN CALIBRE VÁLIDO";
                 String translation = "Carga: " + f(iLoad) + " A\nPotencia equivalente: " + whole(pLoad) + " W";
@@ -448,7 +458,7 @@ public class MainActivity extends Activity {
                         "\nIz cable: " + f(iz) + " A" +
                         "\nCaída tensión: " + f(pct) + " %  (máx. " + f(dropMax) + " %)" +
                         (rec > 0 ? "\n\n" + f(iLoad) + " A ≤ " + f(rec) + " A ≤ " + f(iz) + " A" : "") +
-                        "\n~ " + plain);
+                        (breakerOk && dropOk ? "\n~ " + plain : FieldIssues.warning("", plain)));
 
                 lastExplanation = "La app busca un calibre comercial que sea igual o superior a la corriente de carga (" + f(iLoad) + " A) y que, al mismo tiempo, no supere la capacidad corregida del cable (" + f(iz) + " A). " +
                         (dropOk ? "Además, la caída de tensión cumple el límite introducido." : "La caída de tensión no cumple el límite introducido, por eso aparece una advertencia.");
@@ -456,6 +466,18 @@ public class MainActivity extends Activity {
             } else {
                 double recSec = ElectricalCalculator.recommendSection(iLoad,in,v,len,dropMax,mat,ins,temp,ph);
                 if (recSec < 0) {
+                    if (iLoad > in) {
+                        load.setError("La intensidad de carga supera el calibre seleccionado.");
+                        markChoice(breaker);
+                    } else {
+                        double largest = ElectricalCalculator.SECTIONS[ElectricalCalculator.SECTIONS.length - 1];
+                        double largestIz = ElectricalCalculator.correctedAmpacity(largest, mat, ins, temp);
+                        if (in > largestIz) markChoice(breaker);
+                        if (ElectricalCalculator.voltageDropPercent(iLoad, v, len, largest, mat, ph) > dropMax) {
+                            if (!advancedVisible) toggleAdvanced();
+                            maxDrop.setError("Ninguna sección del catálogo satisface esta caída.");
+                        }
+                    }
                     showStatus(Status.BAD,
                             "✕ SIN SECCIÓN VÁLIDA EN LA TABLA\n\nCarga: " + f(iLoad) + " A\nPotencia equivalente: " + whole(pLoad) + " W\nMagnetotérmico: " + f(in) + " A\n\nComprueba que la carga no supera el magnetotérmico o revisa los datos.");
                     lastExplanation = "Para poder proteger correctamente el circuito debe cumplirse primero que la corriente de carga no sea mayor que la corriente nominal del magnetotérmico. Después, el cable debe soportar al menos esa protección y cumplir la caída de tensión indicada.";
@@ -486,15 +508,61 @@ public class MainActivity extends Activity {
         }
     }
 
+    private boolean showMissingFields() {
+        EditText[] fields = {load, voltage, powerFactor, length, temperature, maxDrop};
+        String[] names = {loadType.getSelectedItemPosition() == 0 ? "Potencia de la carga" : "Intensidad de la carga",
+                "Tensión", "Factor de potencia", "Longitud de ida", "Temperatura ambiente", "Caída máxima"};
+        StringBuilder missing = new StringBuilder();
+        boolean advancedMissing = false;
+        for (int index = mode.getSelectedItemPosition() == 2 ? 1 : 0; index < fields.length; index++) {
+            if (!clean(fields[index]).isEmpty()) continue;
+            fields[index].setError("Campo requerido");
+            missing.append("\n• ").append(names[index]);
+            if (index >= 3) advancedMissing = true;
+        }
+        if (missing.length() == 0) return false;
+        if (advancedMissing && !advancedVisible) toggleAdvanced();
+        showStatus(Status.BAD, "Completa los campos necesarios para este cálculo." + missing);
+        return true;
+    }
+
+    private void markChoice(Spinner spinner) {
+        spinner.setBackgroundTintList(android.content.res.ColorStateList.valueOf(Color.rgb(255, 222, 220)));
+        spinner.setContentDescription(((String) spinner.getSelectedItem()) + ". Revisar");
+    }
+
+    private void clearFieldMarks() {
+        for (EditText field : new EditText[]{load, voltage, powerFactor, length, temperature, maxDrop}) {
+            field.setError(null);
+        }
+        for (Spinner spinner : new Spinner[]{breaker, section, insulation}) {
+            spinner.setBackgroundTintList(null);
+            spinner.setContentDescription(null);
+        }
+    }
+
     private void validateInputs(double v, double pf, double len, double temp, double dropMax) {
-        if (v <= 0 || v > 1000) throw new IllegalArgumentException("La tensión debe ser mayor que 0 V y razonable para baja tensión.");
-        if (pf <= 0 || pf > 1) throw new IllegalArgumentException("El factor de potencia debe estar entre 0 y 1.");
-        if (len < 0 || len > 10000) throw new IllegalArgumentException("Revisa la longitud del conductor.");
-        if (temp < -50 || temp > 120) throw new IllegalArgumentException("Revisa la temperatura ambiente.");
-        if (dropMax <= 0 || dropMax > 20) throw new IllegalArgumentException("La caída de tensión máxima debe ser mayor que 0 % y razonable.");
+        if (v <= 0 || v > 1000) { voltage.setError("Revisa la tensión."); throw new IllegalArgumentException("La tensión debe ser mayor que 0 V y razonable para baja tensión."); }
+        if (pf <= 0 || pf > 1) { powerFactor.setError("Revisa el factor de potencia."); throw new IllegalArgumentException("El factor de potencia debe estar entre 0 y 1."); }
+        if (len < 0 || len > 10000) {
+            if (!advancedVisible) toggleAdvanced();
+            length.setError("Revisa la longitud.");
+            throw new IllegalArgumentException("Revisa la longitud del conductor.");
+        }
+        if (temp < -50 || temp > 120) {
+            if (!advancedVisible) toggleAdvanced();
+            temperature.setError("Revisa la temperatura.");
+            throw new IllegalArgumentException("Revisa la temperatura ambiente.");
+        }
+        if (dropMax <= 0 || dropMax > 20) {
+            if (!advancedVisible) toggleAdvanced();
+            maxDrop.setError("Revisa la caída máxima.");
+            throw new IllegalArgumentException("La caída de tensión máxima debe ser mayor que 0 % y razonable.");
+        }
     }
 
     private void clearFields() {
+        clearFieldMarks();
         for (EditText field : new EditText[]{load, voltage, powerFactor, length, temperature, maxDrop}) {
             field.setText("");
         }
@@ -504,6 +572,7 @@ public class MainActivity extends Activity {
     }
 
     private void resetForm() {
+        clearFieldMarks();
         mode.setSelection(0);
         phase.setSelection(0);
         loadType.setSelection(0);

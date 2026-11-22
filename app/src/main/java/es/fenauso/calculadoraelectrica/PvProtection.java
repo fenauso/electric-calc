@@ -9,6 +9,13 @@ final class PvProtection {
 
     private PvProtection() {}
 
+    static int fuseCandidate(double minimum, double maximum) {
+        for (int caliber : GPV) {
+            if (caliber >= minimum && caliber <= maximum) return caliber;
+        }
+        return 0;
+    }
+
     static String calculate(Input x) {
         double voc = x.positive("voc");
         double isc = x.positive("isc");
@@ -34,21 +41,15 @@ final class PvProtection {
         }
         if (minimum > 0 && iz > 0 && declared > 0) {
             double upper = Math.min(iz, declared);
-            int candidate = 0;
-            for (int caliber : GPV) {
-                if (caliber >= minimum && caliber <= upper) {
-                    candidate = caliber;
-                    break;
-                }
-            }
+            int candidate = fuseCandidate(minimum, upper);
             result.append("\nCalibre mínimo de diseño: ").append(show(minimum)).append(" A")
                     .append("\nLímite superior por cable y módulo: ").append(show(upper)).append(" A");
-            result.append(candidate == 0 ? "\nFusible gPV: sin calibre en el catálogo para ese intervalo."
+            result.append(candidate == 0 ? FieldIssues.warning("mindc fuse izdc", "Fusible gPV: sin calibre en el catálogo para ese intervalo.")
                     : "\nFusible gPV candidato si procede: " + candidate + " A");
             if (proposed > 0) {
                 result.append("\nFusible previsto: ").append(show(proposed)).append(" A")
-                        .append("\nComparación del calibre previsto: ")
-                        .append(proposed >= minimum && proposed <= upper ? "dentro del intervalo calculado." : "fuera del intervalo calculado.");
+
+                        .append(proposed >= minimum && proposed <= upper ? "\nComparación del calibre previsto: dentro del intervalo calculado." : FieldIssues.warning("fuseselect", "Comparación del calibre previsto: fuera del intervalo calculado."));
             }
         } else {
             result.append("\n~ Para comparar calibres, indica el mínimo de diseño, el fusible máximo de ficha y la Iz del string.");
@@ -80,9 +81,9 @@ final class PvProtection {
                 .append("\nIz mínima del cable de conexión si aplica ITC-BT-40, apartado 5: ").append(show(iac * 1.25)).append(" A")
                 .append("\nMagnetotérmico CA: ");
         if (izac == 0) result.append("pendiente de Iz corregida.");
-        else if (breaker < 0) result.append("sin calibre de catálogo compatible con los límites introducidos.");
+        else if (breaker < 0) result.append("sin calibre compatible.").append(FieldIssues.warning("izac maxac", "Magnetotérmico CA: revisa los límites de calibre."));
         else result.append(show(breaker)).append(" A como candidato por intensidad.");
-        if (izac > 0 && izac < iac * 1.25) result.append("\n~ La Iz declarada queda por debajo del criterio del 125 % cuando sea aplicable.");
+        if (izac > 0 && izac < iac * 1.25) result.append(FieldIssues.warning("izac", "Iz declarada: por debajo del criterio del 125 % cuando sea aplicable."));
         if (x.has("fault")) result.append("\nPoder de corte mínimo por cortocircuito previsto: ").append(show(x.positive("fault"))).append(" kA");
         else result.append("\n~ Falta la corriente de cortocircuito prevista para comprobar poder de corte.");
         result.append("\n~ Verifica curva, polos, tensión asignada y desconexión por defecto. ")

@@ -104,6 +104,53 @@ public class ProCalculationsTest {
         assertTrue(result.contains("Magnetotérmico CA: " + ProCalculations.show(25)));
     }
 
+    @Test
+    public void identifiesAllMissingFieldsForSelectedResistanceMode() {
+        assertEquals(java.util.Arrays.asList("l", "t"),
+                java.util.Arrays.asList(ProModule.RESISTANCE.requiredFields(values("mode=3 s=2.5"))));
+        assertEquals(0, ProModule.RESISTANCE.requiredFields(values("mode=0 v=12 i=0.25")).length);
+    }
+
+    @Test
+    public void identifiesTheStringInputsThatExceedTheirLimits() {
+        Map<String, String> inputs = values("p=400 voc=50 vmp=40 isc=11 imp=10 cvoc=-0.3 cvmp=-0.4"
+                + " cold=-10 hot=70 irr=1000 max=600 start=140 low=160 high=550 imax=25 scmax=30"
+                + " inputs=2 mppt=2 ac=5 ns=12 np=3");
+        String result = ProModule.SOLAR.calculate(inputs);
+        assertEquals(java.util.Arrays.asList("ns", "np"), new java.util.ArrayList<>(FieldIssues.keys(result)));
+    }
+
+    @Test
+    public void estimatesInverterAndPanelsWithoutDetailedEquipment() {
+        Map<String, String> input = values("design=1 goal=1 dailygen=12 sun=4 pr=0.75 p=400 ratio=1.25");
+        assertEquals(0, ProModule.PV_PROJECT.requiredFields(input).length);
+        PvProject.Plan plan = PvProject.calculate(new ProModule.Input(input));
+        assertTrue(plan.text().contains("Módulos estimados: 10 unidades"));
+        assertTrue(plan.text().contains("Potencia nominal de inversor de referencia: " + ProCalculations.show(3.2)));
+        assertTrue(plan.details().isEmpty());
+    }
+
+    @Test
+    public void producesDetailedMaterialsAndSharesCalculatedStrings() {
+        Map<String, String> input = new HashMap<>();
+        for (String definition : ProModule.PV_PROJECT.fields) {
+            String[] field = definition.split(":", 2);
+            String[] value = field[1].split("=", 2);
+            input.put(field[0], field[1].contains("|") ? "0" : value.length == 2 ? value[1] : "");
+        }
+        input.put("storage", "1");
+        assertEquals(0, ProModule.PV_PROJECT.requiredFields(input).length);
+        PvProject.Plan plan = PvProject.calculate(new ProModule.Input(input));
+        assertTrue(plan.text().contains("Módulos FV: 13 unidades"));
+        assertTrue(plan.text().contains("Lista de protecciones"));
+        assertTrue(plan.text().contains("Unidades de batería: 2"));
+        assertEquals("13", plan.details().get(ProModule.SOLAR).get("ns"));
+        assertEquals(0, ProModule.SOLAR.requiredFields(plan.details().get(ProModule.SOLAR)).length);
+        assertEquals(0, ProModule.DC.requiredFields(plan.details().get(ProModule.DC)).length);
+        assertEquals(0, ProModule.PV_PROTECTION.requiredFields(plan.details().get(ProModule.PV_PROTECTION)).length);
+        assertEquals(0, ProModule.BATTERY.requiredFields(plan.details().get(ProModule.BATTERY)).length);
+    }
+
     private static Map<String, String> values(String assignments) {
         Map<String, String> values = new HashMap<>();
         for (String assignment : assignments.split(" ")) {

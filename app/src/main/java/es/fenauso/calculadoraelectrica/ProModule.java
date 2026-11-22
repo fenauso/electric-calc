@@ -22,6 +22,73 @@ enum ProModule {
     ENERGY("Consumo y costes", "Puedes calcular un periodo por tarifa. Incluye los términos fijos del periodo si quieres incorporarlos.",
             "p:Potencia media (kW)", "h:Horas de uso al día", "d:Días", "price:Precio de la energía (€/kWh)",
             "fixed:Coste fijo del periodo en euros=0", "tax:Impuesto sobre el subtotal (%)=0"),
+    PV_PROJECT("Proyecto fotovoltaico", "Calcula una propuesta de autoconsumo residencial conectado a red a partir de un objetivo y las fichas de los equipos.",
+            "design:Con fichas de equipos|Estimación inicial sin ficha de inversor",
+            "goal:Objetivo en kWp|Objetivo por energía diaria",
+            "ratio:Relación CC/CA supuesta=1,2",
+            "target:Potencia pico objetivo (kWp)=5,5",
+            "dailygen:Energía diaria que se desea cubrir (kWh)=16",
+            "sun:Horas solares pico del periodo de diseño=4,5",
+            "pr:Rendimiento global de generación (0–1)=0,8",
+            "cold:Temperatura de célula mínima (°C)=-5",
+            "hot:Temperatura de célula máxima (°C)=70",
+            "irr:Irradiancia máxima de diseño (W/m²)=1050",
+            "p:Potencia por módulo (Wp)=440",
+            "voc:Voc STC del módulo (V)=40,6",
+            "vmp:Vmp STC del módulo (V)=34",
+            "isc:Isc STC del módulo (A)=13,8",
+            "imp:Imp STC del módulo (A)=12,94",
+            "cvoc:Coeficiente de Voc (%/°C)=-0,25",
+            "cvmp:Coeficiente de Vmp (%/°C)=-0,30",
+            "cisc:Coeficiente de Isc (%/°C, opcional)=0,045",
+            "reverse:Corriente inversa máxima del módulo (A, opcional)",
+            "fuse:Fusible serie máximo del módulo (A, opcional)=25",
+            "ac:Potencia nominal del inversor (kW)=5",
+            "pmax:Potencia FV máxima admitida (kWp)=7,5",
+            "phase:Salida monofásica 230 V|Salida trifásica 400 V",
+            "iac:Corriente máxima CA de ficha (A, opcional)=22",
+            "max:Tensión CC máxima efectiva (V)=600",
+            "start:Tensión de arranque del inversor (V)=120",
+            "low:MPPT mínimo (V)=100",
+            "high:MPPT máximo (V)=550",
+            "imax:Corriente operativa máxima por MPPT (A)=16",
+            "scmax:Isc máxima por MPPT (A)=20",
+            "inputs:Entradas físicas por MPPT=1",
+            "trackers:MPPT idénticos disponibles=2",
+            "maxac:Calibre máximo CA de ficha (A, opcional)=32",
+            "ldc:Longitud de ida máxima por string (m)=25",
+            "lac:Longitud CA de ida hasta la interconexión (m)=15",
+            "dropdc:Caída asignada al tramo CC (%)=1",
+            "dropac:Caída asignada al tramo CA (%)=1,5",
+            "tdc:Sección mínima térmica CC verificada (mm², opcional)",
+            "tac:Sección mínima térmica CA verificada (mm², opcional)",
+            "izdc:Iz CC para la sección propuesta (A, opcional)",
+            "izac:Iz CA para la sección propuesta (A, opcional)",
+            "feed:Aporte inverso adicional CC (A, opcional)",
+            "mindc:Calibre mínimo de diseño gPV (A, opcional)",
+            "integrated:Seccionamiento CC por verificar|Seccionador CC integrado y verificado|Seccionador CC externo requerido",
+            "rcd:Diferencial según fabricante sin verificar|Fabricante admite tipo A|Fabricante exige otra solución",
+            "spdcc:Sobretensiones CC sin evaluar|CC requiere tipo 2|CC requiere tipo 1 o 1+2|CC sin protector adicional según estudio",
+            "spdca:Sobretensiones CA sin evaluar|CA requiere tipo 2|CA requiere tipo 1 o 1+2|CA sin protector adicional según estudio",
+            "fault:Cortocircuito previsto máximo en CA (kA, opcional)=4",
+            "storage:Sin batería|Con batería opcional",
+            "daily:Consumo diario de respaldo en CA (kWh)=4,5",
+            "days:Autonomía de respaldo (días)=1",
+            "eta:Rendimiento de descarga a CA (0–1)=0,92",
+            "dod:Fracción utilizable (0–1)=0,8",
+            "bank:Tensión nominal del banco (V)=51,2",
+            "v:Tensión nominal de una batería (V)=51,2",
+            "ah:Capacidad de una batería (Ah)=100",
+            "ms:Máximo en serie autorizado=1",
+            "mp:Máximo de ramas en paralelo autorizado=4",
+            "min:Tensión mínima de trabajo del banco (V)=44,8",
+            "peak:Potencia punta de respaldo (kW)=3",
+            "ids:Descarga máxima por batería (A)=80",
+            "ics:Carga máxima por batería (A)=50",
+            "bmsd:Límite total de descarga (A, opcional)=100",
+            "bmsc:Límite total de carga (A, opcional)=80",
+            "charge:Potencia disponible para recarga (kW)=2",
+            "ec:Rendimiento de carga (0–1)=0,95"),
     SOLAR("Fotovoltaica · strings", "Comprueba un grupo de MPPT idénticos y con el mismo reparto. Los valores térmicos son de célula.",
             "p:Potencia STC del módulo (Wp)", "voc:Voc STC (V)", "vmp:Vmp STC (V)",
             "isc:Isc STC (A)", "imp:Imp STC (A)", "cvoc:Coeficiente de Voc (%/°C)",
@@ -98,6 +165,31 @@ enum ProModule {
         this.fields = fields;
     }
 
+    String[] requiredFields(Map<String, String> values) {
+        Input x = new Input(values);
+        String keys = switch (this) {
+            case RESISTANCE -> switch (x.option("mode")) {
+                case 1, 2 -> "list";
+                case 3 -> "l s t";
+                default -> {
+                    int present = (x.has("v") ? 1 : 0) + (x.has("i") ? 1 : 0) + (x.has("r") ? 1 : 0);
+                    yield present < 2 ? "v i r" : "";
+                }
+            };
+            case REACTIVE -> "p a b v f";
+            case CONDUIT -> x.option("rule") == 1 ? "s n" : "list";
+            case ENERGY -> "p h d price fixed tax";
+            case PV_PROJECT -> PvProject.required(x);
+            case SOLAR -> "p voc vmp isc imp cvoc cvmp cold hot irr max start low high imax scmax inputs mppt ac ns np";
+            case PV_PROTECTION -> "voc isc parallel" + (x.has("iac") ? "" : " ac");
+            case DC -> "v i ib l max" + (x.has("iz") ? " s" : "");
+            case BATTERY -> "daily days eta dod bank v ah ms mp min peak ids ics charge ec";
+            case EV -> "p pf l drop" + (x.has("iz") ? " s" : "") + (x.has("kwh") ? " from to eta" : "");
+        };
+        return keys.isEmpty() ? new String[0] : java.util.Arrays.stream(keys.split(" "))
+                .filter(key -> !x.has(key)).toArray(String[]::new);
+    }
+
     String calculate(Map<String, String> values) {
         Input x = new Input(values);
         return switch (this) {
@@ -105,6 +197,7 @@ enum ProModule {
             case REACTIVE -> reactive(x);
             case CONDUIT -> ConduitSizing.calculate(x);
             case ENERGY -> energy(x);
+            case PV_PROJECT -> PvProject.calculate(x).text();
             case SOLAR -> SolarSizing.strings(x);
             case PV_PROTECTION -> PvProtection.calculate(x);
             case DC -> dc(x);
@@ -116,7 +209,7 @@ enum ProModule {
     private static String resistance(Input x) {
         int mode = x.option("mode");
         if (mode == 1 || mode == 2) {
-            return "Resistencia equivalente: " + show(equivalent(list(x.text("list")), mode == 2))
+            return "Resistencia equivalente: " + show(equivalent(x.list("list"), mode == 2))
                     + " Ω\n" + (mode == 1 ? "R = Σ Rᵢ" : "1/R = Σ (1/Rᵢ)");
         }
         if (mode == 3) {
@@ -128,7 +221,7 @@ enum ProModule {
                     + " Ω\nR = ρ(T) · L / S\nL es la longitud total del conductor considerado.";
         }
         if ((x.has("v") ? 1 : 0) + (x.has("i") ? 1 : 0) + (x.has("r") ? 1 : 0) != 2)
-            throw new IllegalArgumentException("Introduce exactamente dos valores: tensión, intensidad o resistencia.");
+            throw FieldIssues.invalid("v i r", "Introduce exactamente dos valores: tensión, intensidad o resistencia.");
         double v = x.optionalPositive("v"), i = x.optionalPositive("i"), r = x.optionalPositive("r");
         if (!x.has("v")) v = i * r;
         if (!x.has("i")) i = v / r;
@@ -138,7 +231,11 @@ enum ProModule {
     }
 
     private static String reactive(Input x) {
-        double kvar = compensation(x.positive("p"), x.number("a"), x.number("b"));
+        double initial = x.number("a"), target = x.number("b");
+        if (initial <= 0 || initial > 1) throw FieldIssues.invalid("a", "El cos φ inicial debe estar entre 0 y 1.");
+        if (target <= 0 || target > 1) throw FieldIssues.invalid("b", "El cos φ objetivo debe estar entre 0 y 1.");
+        if (target < initial) throw FieldIssues.invalid("a b", "El cos φ objetivo debe ser igual o superior al inicial.");
+        double kvar = compensation(x.positive("p"), initial, target);
         double c = capacitorMicrofarads(kvar, x.positive("v"), x.positive("f"), x.option("mode"));
         return "Potencia de compensación: " + show(kvar) + " kvar\nCapacidad por rama: " + show(c)
                 + " µF\nQc = P · (tan φ inicial − tan φ objetivo)\n"
@@ -147,7 +244,7 @@ enum ProModule {
 
     private static String energy(Input x) {
         double h = x.nonnegative("h");
-        if (h > 24) throw new IllegalArgumentException("Las horas diarias no pueden superar 24.");
+        if (h > 24) throw FieldIssues.invalid("h", "Las horas diarias no pueden superar 24.");
         double kwh = x.nonnegative("p") * h * x.positive("d");
         double variable = kwh * x.nonnegative("price");
         double fixed = x.nonnegative("fixed");
@@ -159,7 +256,7 @@ enum ProModule {
 
     private static String dc(Input x) {
         double voltage = x.positive("v"), current = x.positive("i"), design = x.positive("ib");
-        if (design < current) throw new IllegalArgumentException("La intensidad de diseño debe ser al menos la de servicio.");
+        if (design < current) throw FieldIssues.invalid("i ib", "La intensidad de diseño debe ser al menos la de servicio.");
         double length = x.nonnegative("l"), drop = x.positive("max"), rho = x.option("metal") == 0 ? 0.0225 : 0.036;
         double minimum = minimumSection(voltage, length, current, drop, rho, 2, 0);
         return CableSizing.result(x, voltage, current, design, length, rho, 2, drop, minimum, 0)
@@ -171,16 +268,53 @@ enum ProModule {
     static final class Input {
         private final Map<String, String> data;
         Input(Map<String, String> data) { this.data = data; }
+        Map<String, String> values() { return data; }
         String text(String key) { return data.getOrDefault(key, "").trim(); }
         boolean has(String key) { return !text(key).isEmpty(); }
         double number(String key) {
-            if (!has(key)) throw new IllegalArgumentException("Completa los campos necesarios para este cálculo.");
-            return decimal(text(key));
+            if (!has(key)) throw FieldIssues.invalid(key, "Completa los campos necesarios para este cálculo.");
+            try {
+                return decimal(text(key));
+            } catch (IllegalArgumentException e) {
+                throw FieldIssues.invalid(key, "Revisa el formato numérico de los campos señalados.");
+            }
         }
-        double positive(String key) { return ProCalculations.positive(number(key), "El valor"); }
-        double nonnegative(String key) { return ProCalculations.nonnegative(number(key), "El valor"); }
+        double positive(String key) {
+            double value = number(key);
+            if (value <= 0) throw FieldIssues.invalid(key, "El valor señalado debe ser mayor que cero.");
+            return value;
+        }
+        double nonnegative(String key) {
+            double value = number(key);
+            if (value < 0) throw FieldIssues.invalid(key, "El valor señalado no puede ser negativo.");
+            return value;
+        }
         double optionalPositive(String key) { return has(key) ? positive(key) : 0; }
-        int integer(String key) { return count(number(key), "El número de unidades"); }
+        int integer(String key) {
+            double value = number(key);
+            try {
+                return count(value, "El número de unidades");
+            } catch (IllegalArgumentException e) {
+                throw FieldIssues.invalid(key, e.getMessage());
+            }
+        }
+
+        double fraction(String key, String label) {
+            double value = number(key);
+            try {
+                return ProCalculations.fraction(value, label);
+            } catch (IllegalArgumentException e) {
+                throw FieldIssues.invalid(key, e.getMessage());
+            }
+        }
+
+        double[] list(String key) {
+            try {
+                return ProCalculations.list(text(key));
+            } catch (IllegalArgumentException e) {
+                throw FieldIssues.invalid(key, "Escribe valores positivos separados por punto y coma.");
+            }
+        }
         int option(String key) { return Integer.parseInt(text(key)); }
     }
 }
