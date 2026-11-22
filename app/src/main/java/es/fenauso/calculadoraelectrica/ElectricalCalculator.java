@@ -78,6 +78,15 @@ public final class ElectricalCalculator {
         return 100.0 * drop / voltage;
     }
 
+    public static double maximumLoadCurrent(double breaker, double cableAmpacity, double voltage,
+                                            double lengthM, double maxDropPct, double section,
+                                            Material material, Phase phase) {
+        requirePositive(breaker, maxDropPct);
+        double dropPerAmp = voltageDropPercent(1.0, voltage, lengthM, section, material, phase);
+        double equipmentLimit = Math.min(breaker, cableAmpacity);
+        return dropPerAmp == 0.0 ? equipmentLimit : Math.min(equipmentLimit, maxDropPct / dropPerAmp);
+    }
+
     public static double recommendBreaker(double loadCurrent, double cableAmpacity) {
         requirePositive(loadCurrent, cableAmpacity);
         for (double breaker : BREAKERS) {

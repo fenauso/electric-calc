@@ -32,6 +32,7 @@ public class MainActivity extends Activity {
     private TextView result, equation, loadHint, loadConversion, advancedButton, whyButton;
 
     private boolean advancedVisible = false;
+    private boolean hasCalculationResult;
     private String lastExplanation = "";
     private SharedPreferences prefs;
 
@@ -128,12 +129,14 @@ public class MainActivity extends Activity {
         addFieldPair("Tensión (V) ⓘ", voltage, "Factor potencia ⓘ", powerFactor);
 
         phase.setOnItemSelectedListener(listener(() -> {
+            invalidateCalculation();
             if (phase.getSelectedItemPosition()==0 && clean(voltage).equals("400")) voltage.setText("230");
             if (phase.getSelectedItemPosition()==1 && clean(voltage).equals("230")) voltage.setText("400");
             updateLoadConversion();
         }));
 
         loadType.setOnItemSelectedListener(listener(() -> {
+            invalidateCalculation();
             boolean watts = loadType.getSelectedItemPosition()==0;
             loadHint.setText(watts ? "Potencia de la carga (W)  ⓘ" : "Intensidad de la carga (A)  ⓘ");
             updateLoadConversion();
@@ -204,6 +207,13 @@ public class MainActivity extends Activity {
         whyButton.setVisibility(View.GONE);
         root.addView(whyButton);
         whyButton.setOnClickListener(v -> showWhy());
+
+        addWatcher(length);
+        addWatcher(temperature);
+        addWatcher(maxDrop);
+        for (Spinner input : new Spinner[]{material, insulation, breaker, section}) {
+            input.setOnItemSelectedListener(listener(this::invalidateCalculation));
+        }
 
         TextView note = text("Cálculo orientativo. La intensidad admisible depende también del método de instalación, agrupamiento, canalización y normativa aplicable. Verifica el resultado con REBT/UNE antes de ejecutar una instalación.", 12, MUTED, false);
         note.setPadding(dp(4),dp(14),dp(4),0);
@@ -305,6 +315,7 @@ public class MainActivity extends Activity {
     }
 
     private void loadExample() {
+        invalidateCalculation();
         mode.setSelection(0);
         phase.setSelection(0);
         loadType.setSelection(0);
@@ -337,13 +348,14 @@ public class MainActivity extends Activity {
         section.setEnabled(m != 0);
         section.setAlpha(m!=0?1f:.45f);
 
-        whyButton.setVisibility(View.GONE);
+        clearCalculation();
         if (m==0) showStatus(Status.INFO,"Vamos a calcular la sección mínima del cable. Introduce la carga y el magnetotérmico que ya conoces.");
         if (m==1) showStatus(Status.INFO,"Vamos a calcular un magnetotérmico adecuado a la carga y a la sección de cable conocida.");
         if (m==2) showStatus(Status.INFO,"Vamos a calcular la carga máxima permitida por el magnetotérmico y el cable seleccionados.");
     }
 
     private void calculate() {
+        hasCalculationResult = true;
         try {
             double v = num(voltage);
             double pf = num(powerFactor);
@@ -363,29 +375,35 @@ public class MainActivity extends Activity {
 
             if (m == 2) {
                 double iz = ElectricalCalculator.correctedAmpacity(sec,mat,ins,temp);
-                double iMax = Math.min(in,iz);
+                if (iz <= 0) {
+                    throw new IllegalArgumentException("La tabla no ofrece intensidad admisible para esa temperatura y aislamiento.");
+                }
+                double iMax = ElectricalCalculator.maximumLoadCurrent(in,iz,v,len,dropMax,sec,mat,ph);
                 double pct = ElectricalCalculator.voltageDropPercent(iMax,v,len,sec,mat,ph);
                 double pMax = ElectricalCalculator.powerFromCurrent(iMax,v,pf,ph);
                 boolean protectionValid = in <= iz;
-                boolean dropValid = pct <= dropMax;
-                Status status = protectionValid && dropValid ? Status.GOOD : Status.WARNING;
+                Status status = protectionValid ? Status.GOOD : Status.WARNING;
 
                 String simple = protectionValid
                         ? "El magnetotérmico no supera la capacidad corregida del cable."
                         : "El magnetotérmico es demasiado grande para la capacidad calculada del cable.";
+                String comparison = f(iMax) + " A ≤ " + f(in) + " A" +
+                        (protectionValid ? " ≤ " + f(iz) + " A"
+                                : "\n" + f(in) + " A > " + f(iz) + " A");
 
                 showStatus(status,
                         (status==Status.GOOD ? "✓ COMBINACIÓN COHERENTE" : "⚠ REVISAR COMBINACIÓN") +
-                        "\n\nCarga máxima:  " + whole(pMax) + " W  ≈ " + f(iMax) + " A" +
+                        (protectionValid ? "\n\nCarga máxima: " : "\n\nLímite teórico de carga: ") +
+                        whole(pMax) + " W  ≈ " + f(iMax) + " A" +
                         "\nMagnetotérmico: " + f(in) + " A" +
                         "\nCable:          " + sectionText(sec) + "  (Iz ≈ " + f(iz) + " A)" +
-                        "\nCaída tensión:  " + f(pct) + " %" +
-                        "\n\n" + f(iMax) + " A ≤ " + f(in) + " A ≤ " + f(iz) + " A" +
+                        "\nCaída tensión:  " + f(pct) + " %  (máx. " + f(dropMax) + " %)" +
+                        "\n\n" + comparison +
                         "\n\n" + simple);
 
-                lastExplanation = "La carga máxima se limita por el elemento más restrictivo entre el magnetotérmico y la capacidad corregida del cable. " +
+                lastExplanation = "El cálculo toma el menor límite de corriente entre el magnetotérmico, la capacidad corregida del cable y la caída de tensión máxima. " +
                         "Con los datos introducidos, la app obtiene aproximadamente " + f(iMax) + " A, equivalentes a " + whole(pMax) + " W. " +
-                        (dropValid ? "La caída de tensión calculada queda dentro del límite indicado." : "La caída de tensión supera el límite indicado, por lo que conviene revisar la sección o la longitud.");
+                        simple;
                 whyButton.setVisibility(View.VISIBLE);
                 return;
             }
@@ -621,9 +639,24 @@ public class MainActivity extends Activity {
     private void addWatcher(EditText e) {
         e.addTextChangedListener(new TextWatcher() {
             public void beforeTextChanged(CharSequence s,int start,int count,int after) { }
-            public void onTextChanged(CharSequence s,int start,int before,int count) { updateLoadConversion(); }
+            public void onTextChanged(CharSequence s,int start,int before,int count) {
+                invalidateCalculation();
+                if (e == load || e == voltage || e == powerFactor) updateLoadConversion();
+            }
             public void afterTextChanged(Editable s) { }
         });
+    }
+
+    private void invalidateCalculation() {
+        if (!hasCalculationResult) return;
+        clearCalculation();
+        showStatus(Status.INFO, "Datos modificados. Pulsa CALCULAR para actualizar el resultado.");
+    }
+
+    private void clearCalculation() {
+        hasCalculationResult = false;
+        lastExplanation = "";
+        whyButton.setVisibility(View.GONE);
     }
 
     private LinearLayout card() {

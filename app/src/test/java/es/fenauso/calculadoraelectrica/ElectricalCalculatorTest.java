@@ -29,6 +29,23 @@ public class ElectricalCalculatorTest {
     }
 
     @Test
+    public void limitsMaximumLoadByVoltageDrop() {
+        double current = ElectricalCalculator.maximumLoadCurrent(
+                16, 20, 230, 50, 3, 2.5,
+                ElectricalCalculator.Material.COPPER, ElectricalCalculator.Phase.MONOPHASE);
+        assertEquals(7.6666666667, current, 0.000001);
+    }
+
+    @Test
+    public void limitsMaximumLoadByEquipmentWhenLengthIsZero() {
+        double current = ElectricalCalculator.maximumLoadCurrent(
+                25, 20, 230, 0, 3, 2.5,
+                ElectricalCalculator.Material.COPPER, ElectricalCalculator.Phase.MONOPHASE);
+        assertEquals(20, current, 0.000001);
+    }
+
+
+    @Test
     public void validatesProtectionChain() {
         assertTrue(ElectricalCalculator.validProtection(12, 16, 20));
     }
