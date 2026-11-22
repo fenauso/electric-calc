@@ -3,6 +3,7 @@ package es.fenauso.calculadoraelectrica;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.SharedPreferences;
+import android.content.Intent;
 import android.graphics.Color;
 import android.graphics.Typeface;
 import android.graphics.drawable.GradientDrawable;
@@ -59,8 +60,13 @@ public class MainActivity extends Activity {
         root.setBackgroundColor(Color.rgb(247,249,252));
         scroll.addView(root);
 
-        TextView title = text("⚡ Cálculo Eléctrico", 26, NAVY, true);
+        TextView title = text("⚡ Cálculo Eléctrico PRO", 26, NAVY, true);
         root.addView(title);
+
+        Button modules = new Button(this);
+        modules.setText("Módulos PRO");
+        modules.setOnClickListener(v -> showProModules());
+        root.addView(modules);
 
         TextView subtitle = text("Carga · Magnetotérmico · Conductor", 15, MUTED, false);
         subtitle.setPadding(0,dp(3),0,dp(10));
@@ -220,6 +226,21 @@ public class MainActivity extends Activity {
         root.addView(note);
 
         setContentView(scroll);
+    }
+
+    private void showProModules() {
+        ProModule[] modules = ProModule.values();
+        String[] titles = new String[modules.length];
+        for (int i = 0; i < modules.length; i++) titles[i] = modules[i].title;
+        new AlertDialog.Builder(this)
+                .setTitle("Módulos PRO")
+                .setItems(titles, (dialog, index) -> {
+                    Intent intent = new Intent(this, ProActivity.class);
+                    intent.putExtra(ProActivity.MODULE, modules[index].name());
+                    startActivity(intent);
+                })
+                .setNegativeButton("Cerrar", null)
+                .show();
     }
 
     private void buildAdvancedFields() {
