@@ -72,15 +72,7 @@ public class MainActivity extends Activity {
         equation.setBackground(roundRect(NAVY, 14));
         root.addView(equation);
 
-        LinearLayout topTools = new LinearLayout(this);
-        topTools.setOrientation(LinearLayout.HORIZONTAL);
-        LinearLayout.LayoutParams topToolsLp = new LinearLayout.LayoutParams(-1,-2);
-        topToolsLp.setMargins(0,dp(8),0,0);
-        root.addView(topTools, topToolsLp);
-
-        TextView help = smallAction("ⓘ AYUDA");
-        topTools.addView(help, weightedEnd(dp(5)));
-        help.setOnClickListener(v -> showHelp());
+        root.addView(CalculatorTabs.tools(this, this::showHelp));
 
         form = card();
         form.setPadding(dp(14),dp(14),dp(14),dp(14));
@@ -98,17 +90,18 @@ public class MainActivity extends Activity {
         loadType = spinner(new String[]{"Potencia (W)", "Intensidad (A)"});
         addFieldPair("Sistema", phase, "Dato que conoces", loadType);
 
-        loadHint = helpLabel("Potencia de la carga (W)",
-                "Es la potencia total de los aparatos que alimentará el circuito. Si escribes vatios, la app calcula automáticamente los amperios equivalentes.");
-        form.addView(loadHint);
-
         LinearLayout loadRow = new LinearLayout(this);
         loadRow.setOrientation(LinearLayout.HORIZONTAL);
         LinearLayout.LayoutParams loadRowLp = new LinearLayout.LayoutParams(-1,-2);
         loadRowLp.setMargins(0,0,0,dp(12));
-        form.addView(loadRow, loadRowLp);
-
         load = edit("3500");
+        loadHint = label("");
+        FieldHelp.bind(loadHint, load, "Potencia de la carga (W)", () ->
+                loadType.getSelectedItemPosition() == 0
+                        ? "Introduce la potencia total de los aparatos que alimentará el circuito. La app calcula los amperios equivalentes."
+                        : "Introduce en amperios la corriente que consume la carga. La app calcula la potencia equivalente.");
+        form.addView(loadHint);
+        form.addView(loadRow, loadRowLp);
         LinearLayout.LayoutParams loadLp = new LinearLayout.LayoutParams(0,dp(48),1.55f);
         loadLp.setMarginEnd(dp(6));
         loadRow.addView(load, loadLp);
@@ -123,7 +116,7 @@ public class MainActivity extends Activity {
 
         voltage = edit("230");
         powerFactor = edit("0.95");
-        addFieldPair("Tensión (V) ⓘ", voltage, "Factor potencia ⓘ", powerFactor);
+        addFieldPair("Tensión (V)", voltage, "Factor potencia", powerFactor);
 
         phase.setOnItemSelectedListener(listener(() -> {
             invalidateCalculation();
@@ -135,7 +128,7 @@ public class MainActivity extends Activity {
         loadType.setOnItemSelectedListener(listener(() -> {
             invalidateCalculation();
             boolean watts = loadType.getSelectedItemPosition()==0;
-            loadHint.setText(watts ? "Potencia de la carga (W)  ⓘ" : "Intensidad de la carga (A)  ⓘ");
+            FieldHelp.setTitle(loadHint, watts ? "Potencia de la carga (W)" : "Intensidad de la carga (A)");
             updateLoadConversion();
         }));
 
@@ -165,7 +158,7 @@ public class MainActivity extends Activity {
         breaker.setSelection(4);
         section = spinner(SECTION_LABELS);
         section.setSelection(1);
-        addFieldPair("Magnetotérmico ⓘ", breaker, "Sección cable ⓘ", section);
+        addFieldPair("Magnetotérmico", breaker, "Sección cable", section);
 
         LinearLayout buttonRow = new LinearLayout(this);
         buttonRow.setOrientation(LinearLayout.HORIZONTAL);
@@ -246,14 +239,14 @@ public class MainActivity extends Activity {
 
         length = edit("20");
         temperature = edit("30");
-        addFieldPairTo(advancedBox,"Longitud ida (m) ⓘ", length, "Temperatura (°C) ⓘ", temperature);
+        addFieldPairTo(advancedBox,"Longitud ida (m)", length, "Temperatura (°C)", temperature);
 
         maxDrop = edit("3");
-        addFieldTo(advancedBox,"Caída máxima (%) ⓘ", maxDrop);
+        addFieldTo(advancedBox,"Caída máxima (%)", maxDrop);
 
         material = spinner(new String[]{"Cobre", "Aluminio"});
         insulation = spinner(new String[]{"PVC 70 °C", "XLPE 90 °C"});
-        addFieldPairTo(advancedBox,"Conductor", material, "Aislamiento ⓘ", insulation);
+        addFieldPairTo(advancedBox,"Conductor", material, "Aislamiento", insulation);
     }
 
     private void updateLoadConversion() {
@@ -310,14 +303,6 @@ public class MainActivity extends Activity {
         new AlertDialog.Builder(this)
                 .setTitle("Ayuda de Cálculo Eléctrico")
                 .setView(scroll)
-                .setPositiveButton("ENTENDIDO", null)
-                .show();
-    }
-
-    private void showContextHelp(String title, String message) {
-        new AlertDialog.Builder(this)
-                .setTitle(title)
-                .setMessage(message)
                 .setPositiveButton("ENTENDIDO", null)
                 .show();
     }
@@ -677,14 +662,14 @@ public class MainActivity extends Activity {
 
         LinearLayout col1 = new LinearLayout(this);
         col1.setOrientation(LinearLayout.VERTICAL);
-        col1.addView(smartLabel(label1));
+        col1.addView(fieldLabel(label1, field1));
         col1.addView(field1);
         LinearLayout.LayoutParams col1Lp = new LinearLayout.LayoutParams(0,-2,1f);
         col1Lp.setMarginEnd(dp(6));
 
         LinearLayout col2 = new LinearLayout(this);
         col2.setOrientation(LinearLayout.VERTICAL);
-        col2.addView(smartLabel(label2));
+        col2.addView(fieldLabel(label2, field2));
         col2.addView(field2);
         LinearLayout.LayoutParams col2Lp = new LinearLayout.LayoutParams(0,-2,1f);
         col2Lp.setMarginStart(dp(6));
@@ -694,27 +679,33 @@ public class MainActivity extends Activity {
         parent.addView(row, rowLp);
     }
 
-    private TextView smartLabel(String s) {
-        TextView t = label(s);
-        if (s.contains("Tensión")) t.setOnClickListener(v -> showContextHelp("Tensión", "En una vivienda monofásica española suele utilizarse 230 V. En trifásica, entre fases suele utilizarse 400 V."));
-        else if (s.contains("Factor")) t.setOnClickListener(v -> showContextHelp("Factor de potencia", "Relaciona la potencia útil con la potencia aparente. En cargas resistivas suele aproximarse a 1; en motores puede ser menor. Si conoces el dato del fabricante, usa ese valor."));
-        else if (s.contains("Longitud")) t.setOnClickListener(v -> showContextHelp("Longitud", "Introduce la distancia de ida desde el origen del circuito hasta la carga. La longitud influye directamente en la caída de tensión."));
-        else if (s.contains("Temperatura")) t.setOnClickListener(v -> showContextHelp("Temperatura ambiente", "Una temperatura mayor puede reducir la intensidad admisible del conductor. Usa la temperatura aproximada del lugar por donde discurre el cable."));
-        else if (s.contains("Caída")) t.setOnClickListener(v -> showContextHelp("Caída de tensión", "Es la pérdida de tensión producida en el cable. Cuanto más largo sea el circuito y mayor sea la corriente, mayor puede ser la caída."));
-        else if (s.contains("Aislamiento")) t.setOnClickListener(v -> showContextHelp("Aislamiento", "PVC y XLPE soportan temperaturas diferentes y eso influye en la intensidad admisible del cable."));
-        else if (s.contains("Magnetotérmico")) t.setOnClickListener(v -> showContextHelp("Magnetotérmico", "Es el interruptor automático que protege el circuito frente a sobrecargas y cortocircuitos. Su corriente nominal In debe ser igual o mayor que la carga y no superar la capacidad del cable."));
-        else if (s.contains("Sección")) t.setOnClickListener(v -> showContextHelp("Sección del cable", "Es el área del conductor en mm². Una sección mayor soporta más corriente y reduce la caída de tensión."));
-        return t;
+    private TextView fieldLabel(String title, View control) {
+        String message = switch (title) {
+            case "¿Qué deseas calcular?" -> "Elige si quieres obtener la sección del conductor, el calibre del magnetotérmico o la carga máxima. Completa los datos que pide cada opción.";
+            case "Sistema" -> "Selecciona monofásica o trifásica según la alimentación de la carga. En trifásica, introduce la tensión entre fases.";
+            case "Dato que conoces" -> "Selecciona potencia si tienes un valor en vatios, o intensidad si conoces la corriente en amperios.";
+            case "Tensión (V)" -> "Introduce la tensión de alimentación. En monofásica se mide entre fase y neutro y en trifásica, entre fases.";
+            case "Factor potencia" -> "Relaciona la potencia activa con la aparente. Suele aproximarse a 1 en cargas resistivas. Usa el dato del equipo si lo conoces.";
+            case "Longitud ida (m)" -> "Introduce la distancia de ida desde el origen del circuito hasta la carga.";
+            case "Temperatura (°C)" -> "Introduce la temperatura ambiente del lugar por donde discurre el cable. Afecta a su intensidad admisible.";
+            case "Caída máxima (%)" -> "Introduce el porcentaje máximo de pérdida de tensión previsto para este tramo.";
+            case "Conductor" -> "Selecciona el material del conductor. Afecta a la resistencia eléctrica y a la caída de tensión.";
+            case "Aislamiento" -> "Selecciona el aislamiento indicado en la ficha del cable. Su límite térmico influye en la intensidad admisible.";
+            case "Magnetotérmico" -> "Selecciona la intensidad nominal del interruptor que protege el circuito frente a sobrecargas y cortocircuitos.";
+            case "Sección cable" -> "Selecciona el área nominal del conductor en mm² según la ficha del cable.";
+            default -> throw new IllegalArgumentException(title);
+        };
+        TextView label = label(title);
+        FieldHelp.bind(label, control, title, () -> message);
+        return label;
     }
 
-    private TextView helpLabel(String s, String message) {
-        TextView t = label(s + "  ⓘ");
-        t.setOnClickListener(v -> showContextHelp("Carga", message));
-        return t;
-    }
+    private void addField(String name, View view) { addFieldTo(form, name, view); }
 
-    private void addField(String name, View view) { form.addView(label(name)); form.addView(view); }
-    private void addFieldTo(LinearLayout parent,String name,View view) { parent.addView(smartLabel(name)); parent.addView(view); }
+    private void addFieldTo(LinearLayout parent, String name, View view) {
+        parent.addView(fieldLabel(name, view));
+        parent.addView(view);
+    }
 
     private TextView smallAction(String caption) {
         TextView t = text(caption,13,BLUE,true);
@@ -724,7 +715,6 @@ public class MainActivity extends Activity {
         return t;
     }
 
-    private LinearLayout.LayoutParams weightedEnd(int marginEnd) { return weightedEnd(marginEnd,-2,1f); }
     private LinearLayout.LayoutParams weightedStart(int marginStart) { return weightedStart(marginStart,-2,1f); }
     private LinearLayout.LayoutParams weightedEnd(int marginEnd,int height,float weight){ LinearLayout.LayoutParams lp=new LinearLayout.LayoutParams(0,height,weight);lp.setMarginEnd(marginEnd);return lp; }
     private LinearLayout.LayoutParams weightedStart(int marginStart,int height,float weight){ LinearLayout.LayoutParams lp=new LinearLayout.LayoutParams(0,height,weight);lp.setMarginStart(marginStart);return lp; }

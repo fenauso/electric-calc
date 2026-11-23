@@ -68,11 +68,9 @@ public final class ProActivity extends Activity {
         TextView heading = text(module.title, 24);
         body.addView(heading);
         body.addView(text(module.help, 15));
-        Button help = action("ⓘ Ayuda del módulo", false);
-        help.setOnClickListener(v -> showHelp(module.title, ProHelp.overview(module)
+        body.addView(CalculatorTabs.tools(this, () -> showHelp(module.title, ProHelp.overview(module)
                 + "\n\nPulsa Ejemplo para recuperar los valores iniciales o Vaciar campos para introducir tus propios datos."
-                + "\nUn resultado en verde indica que el cálculo se ejecutó. Los avisos en rojo indican límites incumplidos y señalan los campos que conviene revisar."));
-        body.addView(help);
+                + "\nUn resultado en verde indica que el cálculo se ejecutó. Los avisos en rojo indican límites incumplidos y señalan los campos que conviene revisar.")));
         Button clear = action("Vaciar campos", false);
         clear.setOnClickListener(v -> clearFields());
         Button example = action("Ejemplo", false);
@@ -141,7 +139,7 @@ public final class ProActivity extends Activity {
                 @Override public void onNothingSelected(AdapterView<?> p) {}
             });
             inputs.put(key, spinner);
-            addFieldLabel(row, spinner, ProHelp.selectionTitle(module, key), key);
+            row.addView(fieldLabel(spinner, ProHelp.selectionTitle(module, key), key));
             row.addView(spinner);
         } else {
             String[] field = options[0].split("=", 2);
@@ -166,8 +164,7 @@ public final class ProActivity extends Activity {
             });
             inputs.put(key, input);
             String title = unitChoices(key) == null ? field[0] : field[0].replaceFirst(" \\((V|A|Ω|kW)\\)", "");
-            addFieldLabel(row, input, title, key);
-            addInput(row, input, key, state);
+            addInput(row, fieldLabel(input, title, key), input, key, state);
         }
         rows.put(key, row);
         body.addView(row, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
@@ -196,17 +193,19 @@ public final class ProActivity extends Activity {
         clearResult();
     }
 
-    private void addInput(LinearLayout row, EditText input, String key, Bundle state) {
+    private void addInput(LinearLayout row, TextView label, EditText input, String key, Bundle state) {
         String[] choices = unitChoices(key);
         if (choices == null) {
+            row.addView(label);
             row.addView(input);
             return;
         }
         LinearLayout line = new LinearLayout(this);
-        line.setGravity(android.view.Gravity.CENTER_VERTICAL);
-        line.addView(input, new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1));
+        LinearLayout valueField = column();
+        valueField.addView(label);
+        valueField.addView(input, new LinearLayout.LayoutParams(-1, dp(48)));
+        line.addView(valueField, new LinearLayout.LayoutParams(0, -2, 1));
         Spinner spinner = new Spinner(this);
-        spinner.setContentDescription("Unidad de " + choices[0]);
         ArrayAdapter<String> adapter = new ArrayAdapter<>(this, android.R.layout.simple_spinner_item, choices);
         adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
         spinner.setAdapter(adapter);
@@ -216,7 +215,13 @@ public final class ProActivity extends Activity {
             @Override public void onNothingSelected(AdapterView<?> p) {}
         });
         units.put(key, spinner);
-        line.addView(spinner, new LinearLayout.LayoutParams(dp(108), dp(48)));
+        LinearLayout unitField = column();
+        TextView unitLabel = text("Unidad", 15);
+        FieldHelp.bind(unitLabel, spinner, "Unidad", () ->
+                "Selecciona " + choices[0] + " o " + choices[1] + " según la unidad del valor introducido.");
+        unitField.addView(unitLabel);
+        unitField.addView(spinner, new LinearLayout.LayoutParams(-1, dp(48)));
+        line.addView(unitField, new LinearLayout.LayoutParams(dp(108), -2));
         row.addView(line);
     }
 
@@ -246,20 +251,11 @@ public final class ProActivity extends Activity {
         }
     }
 
-    private void addFieldLabel(LinearLayout row, View control, String title, String key) {
-        LinearLayout heading = new LinearLayout(this);
-        heading.setGravity(android.view.Gravity.CENTER_VERTICAL);
+    private TextView fieldLabel(View control, String title, String key) {
         TextView label = text(title, 15);
-        label.setLabelFor(control.getId());
-        label.setTag(title);
+        FieldHelp.bind(label, control, title, () -> ProHelp.field(module, key));
         labels.put(key, label);
-        heading.addView(label, new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1));
-        Button info = new Button(this);
-        info.setText("ⓘ");
-        info.setContentDescription("Ayuda sobre " + title);
-        info.setOnClickListener(v -> showHelp(title, ProHelp.field(module, key)));
-        heading.addView(info, new LinearLayout.LayoutParams(dp(48), dp(48)));
-        row.addView(heading);
+        return label;
     }
 
     private void showHelp(String title, String message) {
@@ -377,9 +373,12 @@ public final class ProActivity extends Activity {
         Button button = action("Fichas de " + family, false);
         button.setOnClickListener(v -> new AlertDialog.Builder(this)
                 .setTitle("Fichas de " + family)
-                .setItems(new String[]{"Cargar ficha", "Guardar ficha con los valores actuales"}, (dialog, option) -> {
-                    if (option == 0) loadEquipment(family, keys);
-                    else saveEquipment(family, keys);
+                .setItems(new String[]{"Cargar ficha", "Guardar ficha con los valores actuales", "Borrar una ficha"}, (dialog, option) -> {
+                    switch (option) {
+                        case 0 -> selectEquipment(family, keys, false);
+                        case 1 -> saveEquipment(family, keys);
+                        case 2 -> selectEquipment(family, keys, true);
+                    }
                 })
                 .show());
         body.addView(button);
@@ -390,7 +389,14 @@ public final class ProActivity extends Activity {
         EditText name = new EditText(this);
         name.setSingleLine(true);
         name.setHint("Fabricante y modelo");
-        new AlertDialog.Builder(this).setTitle("Guardar ficha de " + family).setView(name)
+        LinearLayout form = column();
+        form.setPadding(dp(20), 0, dp(20), 0);
+        TextView nameLabel = text("Fabricante y modelo", 15);
+        FieldHelp.bind(nameLabel, name, "Fabricante y modelo", () ->
+                "Escribe el nombre con el que quieres identificar esta ficha de " + family + " al cargarla o borrarla.");
+        form.addView(nameLabel);
+        form.addView(name);
+        new AlertDialog.Builder(this).setTitle("Guardar ficha de " + family).setView(form)
                 .setPositiveButton("Guardar", (dialog, which) -> {
                     String model = name.getText().toString().trim();
                     if (model.isEmpty()) {
@@ -409,7 +415,7 @@ public final class ProActivity extends Activity {
                 }).setNegativeButton("Cancelar", null).show();
     }
 
-    private void loadEquipment(String family, String keys) {
+    private void selectEquipment(String family, String keys, boolean delete) {
         android.content.SharedPreferences equipment = getSharedPreferences("pv_equipment", MODE_PRIVATE);
         String prefix = family + ":";
         String[] models = equipment.getAll().keySet().stream().filter(key -> key.startsWith(prefix))
@@ -418,10 +424,20 @@ public final class ProActivity extends Activity {
             showHelp("Fichas de " + family, "Todavía no hay fichas guardadas para este equipo.");
             return;
         }
-        new AlertDialog.Builder(this).setTitle("Cargar ficha de " + family)
+        new AlertDialog.Builder(this).setTitle((delete ? "Borrar ficha de " : "Cargar ficha de ") + family)
                 .setItems(models, (dialog, which) -> {
+                    String model = models[which];
+                    if (delete) {
+                        new AlertDialog.Builder(this).setTitle("Borrar ficha de " + family)
+                                .setMessage("¿Quieres borrar la ficha «" + model + "»?")
+                                .setNegativeButton("Cancelar", null)
+                                .setPositiveButton("Borrar", (confirmation, button) ->
+                                        equipment.edit().remove(prefix + model).apply())
+                                .show();
+                        return;
+                    }
                     try {
-                        org.json.JSONObject values = new org.json.JSONObject(equipment.getString(prefix + models[which], "{}"));
+                        org.json.JSONObject values = new org.json.JSONObject(equipment.getString(prefix + model, "{}"));
                         for (String key : keys.split(" ")) {
                             if (!values.has(key)) continue;
                             View field = inputs.get(key);
@@ -457,13 +473,13 @@ public final class ProActivity extends Activity {
         TextView label = labels.get(key);
         if (label == null || rows.get(key).getVisibility() != View.VISIBLE) return;
         label.setTextColor(CalculationResult.ALERT);
-        label.setText(label.getTag() + " · Revisar");
+        FieldHelp.setCaption(label, label.getTag() + " · Revisar");
     }
 
     private void clearFieldMarks() {
         for (TextView label : labels.values()) {
             label.setTextColor(NAVY);
-            label.setText((String) label.getTag());
+            FieldHelp.setCaption(label, (String) label.getTag());
         }
     }
 

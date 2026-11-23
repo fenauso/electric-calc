@@ -1,0 +1,116 @@
+{
+  "encabezados": ["Categoría", "Símbolo / Acrónimo / Término", "Nombre Técnico Completo", "Unidad", "Explicación Sencilla (Para no expertos)"],
+  "categorias": [
+    ["1. Recurso Solar y Conceptos Básicos", [
+      ["1. Recurso Solar y Conceptos Básicos", "Irradiancia (G)", "Irradiancia solar", "W/m²", "Es la potencia solar que llega a una superficie en un instante concreto. Cambia a lo largo del día y con las nubes."],
+      ["1. Recurso Solar y Conceptos Básicos", "Irradiación (H)", "Irradiación solar", "kWh/m²", "Es la energía solar total recibida en una superficie durante un periodo de tiempo (por ejemplo, un día o un mes)."],
+      ["1. Recurso Solar y Conceptos Básicos", "HSP", "Hora Solar Pico", "h (1 HSP = 1 kWh/m²)", "Número de horas ficticias con una irradiancia constante de 1.000 W/m² que producen la misma energía total que la irradiación real del día."],
+      ["1. Recurso Solar y Conceptos Básicos", "Azimut / Inclinación", "Orientación e inclinación del generador", "Grados (°)", "El azimut es hacia dónde miran los paneles (sur es 0° en el hemisferio norte) y la inclinación es el ángulo respecto al suelo horizontal."],
+      ["1. Recurso Solar y Conceptos Básicos", "Albedo", "Coeficiente de reflexión del suelo", "% o 0-1", "Porcentaje de luz solar que rebota en el suelo hacia los paneles. Es clave en paneles bifaciales que aprovechan luz por ambas caras."],
+      ["1. Recurso Solar y Conceptos Básicos", "DHI", "Irradiancia difusa horizontal", "W/m²", "Potencia solar por superficie horizontal que llega dispersada por la atmósfera."],
+      ["1. Recurso Solar y Conceptos Básicos", "GHI", "Irradiancia global horizontal", "W/m²", "Suma de la irradiancia difusa y la componente horizontal de la irradiancia solar directa."]
+    ]],
+    ["2. Arquitectura del Generador FV", [
+      ["2. Arquitectura del Generador FV", "Célula (o celda)", "Célula fotovoltaica", "—", "La unidad básica de silicio que convierte directamente la luz del sol en electricidad."],
+      ["2. Arquitectura del Generador FV", "Módulo (o panel)", "Módulo fotovoltaico", "—", "Conjunto de células solares conectadas (normalmente en serie) y encapsuladas bajo un cristal protector."],
+      ["2. Arquitectura del Generador FV", "String (o rama / cadena)", "Cadena fotovoltaica en serie", "—", "Conjunto de paneles conectados en serie (polo positivo con negativo) para sumar sus voltajes y alcanzar la tensión que pide el inversor."],
+      ["2. Arquitectura del Generador FV", "Array (Campo / Arreglo FV)", "Generador o campo fotovoltaico", "—", "Conjunto de varios strings conectados en paralelo (en una caja combiner box o dentro del MPPT del inversor) para sumar corriente."],
+      ["2. Arquitectura del Generador FV", "Combiner Box", "Caja de conexiones / agrupación DC", "—", "Cuadro eléctrico donde se unen varios strings en paralelo y donde se alojan sus fusibles y protecciones antes de ir al inversor."],
+      ["2. Arquitectura del Generador FV", "Diodo Bypass", "Diodo de derivación", "—", "Pequeña válvula eléctrica dentro de la caja trasera del panel que deja pasar la corriente rodeando una zona con sombra para que no se caliente ni frene toda la fila."],
+      ["2. Arquitectura del Generador FV", "Bifacialidad", "Factor de bifacialidad", "%", "Indica cuánto rinde la cara trasera de un panel bifacial respecto a la delantera (por ejemplo, un 70-80 % adicional con luz reflejada)."],
+      ["2. Arquitectura del Generador FV", "Conector FV", "Conector de corriente continua para módulos fotovoltaicos", "—", "Une cables del generador solar. La compatibilidad debe comprobarse para la pareja de conectores concreta."]
+    ]],
+    ["3. Paneles Solares (Ficha Técnica)", [
+      ["3. Paneles Solares (Ficha Técnica)", "Pmax / Wp / kWp", "Potencia máxima (Vatio pico / Kilovatio pico)", "W o kW", "La potencia máxima que entrega el panel en condiciones ideales de laboratorio (sol perfecto de 1.000 W/m² y 25 °C)."],
+      ["3. Paneles Solares (Ficha Técnica)", "Voc", "Tensión en circuito abierto", "V (Voltios)", "El voltaje máximo del panel cuando recibe sol pero no está conectado a nada. Dato clave para no quemar el inversor en días muy fríos."],
+      ["3. Paneles Solares (Ficha Técnica)", "Vmp / Vmpp", "Tensión en el punto de máxima potencia", "V (Voltios)", "El voltaje real al que trabaja el panel cuando está produciendo electricidad a pleno rendimiento."],
+      ["3. Paneles Solares (Ficha Técnica)", "Isc", "Corriente de cortocircuito", "A (Amperios)", "La intensidad máxima que pasa si se unen los cables positivo y negativo del panel. Sirve para dimensionar fusibles y protecciones."],
+      ["3. Paneles Solares (Ficha Técnica)", "Imp / Impp", "Corriente en el punto de máxima potencia", "A (Amperios)", "La cantidad de corriente que entrega el panel mientras está funcionando normal y produciendo energía."],
+      ["3. Paneles Solares (Ficha Técnica)", "η (Eficiencia)", "Eficiencia del módulo", "%", "Qué porcentaje de la luz solar que toca el panel se convierte realmente en electricidad (hoy suele rondar entre el 20 % y el 23 %)."],
+      ["3. Paneles Solares (Ficha Técnica)", "STC", "Condiciones estándar de medida", "—", "El 'examen de laboratorio' universal (1.000 W/m² de sol, 25 °C de célula y masa de aire AM 1.5) para comparar todos los paneles por igual."],
+      ["3. Paneles Solares (Ficha Técnica)", "NOCT / NMOT", "Temperatura nominal de operación de la célula", "°C", "La temperatura real que alcanza el panel trabajando al sol en un día normal (suele ser 42-45 °C), mucho más realista que los 25 °C de laboratorio."],
+      ["3. Paneles Solares (Ficha Técnica)", "Coef. Temp. Pmax", "Coeficiente de temperatura de potencia", "%/°C", "Cuánta potencia pierde el panel por cada grado que sube por encima de 25 °C (por ejemplo, -0,30 % por cada grado extra de calor)."],
+      ["3. Paneles Solares (Ficha Técnica)", "Coef. Temp. Voc", "Coeficiente de temperatura de tensión", "%/°C", "Cuánto sube el voltaje del panel cuando hace frío. Es vital calcularlo en invierno para no superar el límite de voltaje del inversor."],
+      ["3. Paneles Solares (Ficha Técnica)", "Vsys", "Tensión máxima del sistema", "V (Voltios)", "El voltaje máximo que soportan los materiales y el aislamiento del panel al conectar muchos en serie (normalmente 1.000 V o 1.500 V)."],
+      ["3. Paneles Solares (Ficha Técnica)", "LID / PID", "Degradación inducida por luz / potencial", "%", "Pequeñas pérdidas iniciales de rendimiento que sufren los paneles al exponerse al sol por primera vez (LID) o por diferencias de voltaje con el marco (PID)."],
+      ["3. Paneles Solares (Ficha Técnica)", "Fusible serie máx.", "Calibre máximo del fusible en serie", "A", "Mayor calibre de fusible en serie que admite la ficha del módulo."],
+      ["3. Paneles Solares (Ficha Técnica)", "Coef. Temp. Isc", "Coeficiente de temperatura de la corriente de cortocircuito", "%/°C", "Indica el cambio de Isc por cada grado de variación de la temperatura de la célula."]
+    ]],
+    ["4. Inversores y Reguladores", [
+      ["4. Inversores y Reguladores", "DC / CC", "Corriente Continua", "—", "El tipo de electricidad donde los electrones van siempre en un mismo sentido. Es la que producen los paneles solares y almacenan las baterías."],
+      ["4. Inversores y Reguladores", "AC / CA", "Corriente Alterna", "—", "El tipo de electricidad que cambia de sentido 50 o 60 veces por segundo. Es la que usan los enchufes de casa y la red eléctrica."],
+      ["4. Inversores y Reguladores", "Pnom / kW / kVA", "Potencia nominal de salida AC", "W, kW o kVA", "La potencia máxima continua que el inversor puede entregar a la vivienda o a la red eléctrica sin recortar."],
+      ["4. Inversores y Reguladores", "Ratio DC/AC", "Relación de sobredimensionamiento", "Adimensional (ej. 1,2)", "División entre los kWp instalados en paneles y los kW nominales del inversor. Permite producir más energía en horas de poco sol."],
+      ["4. Inversores y Reguladores", "Clipping (Recorte)", "Limitación de potencia en el inversor", "W o kWh", "Ocurre cuando los paneles producen más potencia de la que el inversor admite y este 'recorta' el pico máximo para protegerse."],
+      ["4. Inversores y Reguladores", "MPPT", "Seguidor del punto de máxima potencia", "—", "El 'cerebro' interno del inversor o regulador que ajusta voltaje y corriente cada segundo para exprimir la máxima potencia de los paneles."],
+      ["4. Inversores y Reguladores", "PWM", "Modulación por ancho de pulsos", "—", "Tipo de regulador de carga más sencillo y económico que el MPPT, habitual en instalaciones aisladas pequeñas."],
+      ["4. Inversores y Reguladores", "Vdc,max", "Tensión máxima de entrada DC", "V (Voltios)", "El límite absoluto de voltaje que soporta el inversor desde los paneles sin sufrir averías graves."],
+      ["4. Inversores y Reguladores", "Rango MPPT", "Rango de tensión operativa MPPT", "V (Voltios)", "La ventana de voltaje (mínimo y máximo) dentro de la cual el inversor trabaja de forma eficiente."],
+      ["4. Inversores y Reguladores", "Imax / Isc max", "Corriente máxima de entrada / cortocircuito", "A (Amperios)", "La intensidad máxima que admite cada entrada del inversor. Si los paneles envían más corriente útil, el inversor la limita."],
+      ["4. Inversores y Reguladores", "ηmax / ηEU / ηCEC", "Eficiencia máxima / europea / americana", "%", "Porcentaje de energía que aprovecha el inversor al pasar de continua a alterna. La europea/CEC pondera el rendimiento a distintas cargas."],
+      ["4. Inversores y Reguladores", "THD", "Distorsión armónica total", "%", "Mide la 'limpieza' o calidad de la onda eléctrica que genera el inversor; cuanto más baja (ej. < 3 %), más segura para aparatos sensibles."],
+      ["4. Inversores y Reguladores", "FP / cos φ", "Factor de potencia", "0 a 1", "Indica qué porcentaje de la electricidad se convierte en trabajo útil frente a energía reactiva. El valor ideal es cercano a 1."],
+      ["4. Inversores y Reguladores", "Tensión de arranque", "Tensión de arranque del inversor", "V", "Tensión de entrada que necesita el inversor para comenzar a funcionar."],
+      ["4. Inversores y Reguladores", "MPPT independientes", "Seguidores independientes del punto de máxima potencia", "—", "Cada seguidor regula su propia entrada. Es útil para grupos de paneles con orientaciones o condiciones distintas."]
+    ]],
+    ["5. Baterías y Almacenamiento", [
+      ["5. Baterías y Almacenamiento", "kWh / Wh", "Kilovatio-hora / Vatio-hora", "kWh", "La capacidad real de energía almacenada (el 'tamaño del depósito' de la batería)."],
+      ["5. Baterías y Almacenamiento", "Ah", "Amperio-hora", "Ah", "Otra forma de medir cuánta carga cabe en una batería (multiplicando Ah × Voltios obtienes los Wh)."],
+      ["5. Baterías y Almacenamiento", "DoD", "Profundidad de descarga", "%", "Qué porcentaje de la batería se puede gastar sin dañarla (en litio suele ser el 90-100 %; en plomo solo el 50 %)."],
+      ["5. Baterías y Almacenamiento", "SoC", "Estado de carga", "%", "El porcentaje de batería que queda disponible en ese momento (igual que el icono de batería del móvil)."],
+      ["5. Baterías y Almacenamiento", "SoH", "Estado de salud", "%", "El nivel de vida útil o capacidad máxima que conserva la batería respecto a cuando era nueva (ej. 95 % tras varios años)."],
+      ["5. Baterías y Almacenamiento", "BMS", "Sistema de gestión de batería", "—", "La placa electrónica que protege la batería frente a sobrecargas, cortocircuitos, exceso de temperatura o descarga total."],
+      ["5. Baterías y Almacenamiento", "C-Rate (0.5C, 1C)", "Tasa de carga o descarga", "C", "Velocidad máxima a la que se puede llenar o vaciar la batería (1C significa cargarla o vaciarla entera en 1 hora; 0.5C en 2 horas)."],
+      ["5. Baterías y Almacenamiento", "LFP / LiFePO4", "Litio-Ferrofosfato", "—", "La química de batería de litio más utilizada en viviendas y solar por ser muy segura, estable y de larga duración."],
+      ["5. Baterías y Almacenamiento", "RTE", "Eficiencia de ida y vuelta (Round-Trip)", "%", "Porcentaje de energía que logras recuperar de la batería respecto a la que metiste al cargarla (en litio ronda el 90-95 %)."],
+      ["5. Baterías y Almacenamiento", "Capacidad útil", "Energía utilizable de la batería", "kWh", "Energía que puede aprovecharse dentro del intervalo de carga permitido."],
+      ["5. Baterías y Almacenamiento", "Potencia de descarga", "Potencia de descarga continua", "kW", "Potencia que la batería puede entregar de forma sostenida en las condiciones especificadas."]
+    ]],
+    ["6. Protecciones y Envolventes", [
+      ["6. Protecciones y Envolventes", "In", "Intensidad nominal", "A (Amperios)", "La corriente normal para la que está diseñado un interruptor automático (magnetotérmico) o fusible sin saltar."],
+      ["6. Protecciones y Envolventes", "Icu / Icn", "Poder de corte último / nominal", "kA", "La corriente máxima de un cortocircuito grave que un interruptor es capaz de frenar de forma segura sin destruirse."],
+      ["6. Protecciones y Envolventes", "IΔn", "Sensibilidad diferencial", "mA", "La pequeña fuga de corriente (ej. 30 mA para personas, 300 mA para incendios) que hace saltar el diferencial para evitar electrocuciones."],
+      ["6. Protecciones y Envolventes", "Tipo A / Tipo B (RCD)", "Clase de interruptor diferencial", "—", "Indica qué tipo de fugas detecta: el Tipo A detecta fugas pulsantes (habitual en hogares) y el Tipo B detecta también fugas en corriente continua."],
+      ["6. Protecciones y Envolventes", "SPD / DPS", "Protector contra sobretensiones", "kV / kA", "Dispositivo que desvía a tierra los picos de tensión provocados por rayos o fallos de la red eléctrica para salvar los equipos."],
+      ["6. Protecciones y Envolventes", "Uc", "Tensión máxima de servicio continuo", "V (Voltios)", "El voltaje normal máximo que soporta un protector de sobretensiones sin activarse ni estropearse."],
+      ["6. Protecciones y Envolventes", "Up", "Nivel de protección en tensión", "kV", "El voltaje residual máximo que el protector deja pasar hacia los equipos cuando ocurre una sobretensión."],
+      ["6. Protecciones y Envolventes", "IP (ej. IP65, IP67)", "Índice de protección", "—", "Dos números que indican la resistencia de la carcasa: el primero es frente al polvo (hasta 6) y el segundo frente al agua (hasta 8)."],
+      ["6. Protecciones y Envolventes", "IK (ej. IK08, IK10)", "Índice de protección contra impactos", "—", "Indica cuánto aguanta la carcasa frente a golpes físicos o granizo (va de 00 a 10)."],
+      ["6. Protecciones y Envolventes", "AFCI", "Interruptor por fallo de arco eléctrico", "—", "Sistema inteligente del inversor que detecta chispas peligrosas en los cables solares y corta la corriente para evitar incendios."],
+      ["6. Protecciones y Envolventes", "RSD", "Apagado rápido (Rapid Shutdown)", "—", "Sistema de seguridad que reduce el voltaje en el tejado a niveles seguros en segundos si ocurre una emergencia o incendio."],
+      ["6. Protecciones y Envolventes", "gPV", "Fusible para circuitos fotovoltaicos", "—", "Fusible diseñado para interrumpir sobrecorrientes de corriente continua en circuitos fotovoltaicos."],
+      ["6. Protecciones y Envolventes", "ΔV", "Caída de tensión", "V o %", "Diferencia de tensión entre los extremos de un tramo por el que circula corriente."],
+      ["6. Protecciones y Envolventes", "PE", "Conductor de protección", "—", "Conecta las partes metálicas accesibles al sistema de protección de la instalación."]
+    ]],
+    ["7. Autoconsumo con Red", [
+      ["7. Autoconsumo con Red", "Smart Meter / CT", "Medidor inteligente / Pinza amperimétrica", "—", "Sensor instalado en el cuadro general de la casa que mide en tiempo real si estás comprando luz de la red o sobrándote energía solar."],
+      ["7. Autoconsumo con Red", "ZEC / Inyección Cero", "Control dinámico de potencia (Vertido cero)", "—", "Función del inversor que frena la producción solar para que nunca salga electricidad hacia la calle si no tienes permiso de vertido."],
+      ["7. Autoconsumo con Red", "EPS / Backup", "Salida de respaldo ante apagones", "W o kW", "Toma especial de algunos inversores híbridos que sigue dando electricidad a circuitos críticos de la casa cuando se cae la red eléctrica."],
+      ["7. Autoconsumo con Red", "Anti-islanding", "Protección anti-isla", "—", "Seguridad obligatoria que desconecta el inversor al instante si hay un apagón en la calle, evitando electrocutar a los operarios de la red."],
+      ["7. Autoconsumo con Red", "PR", "Performance Ratio (Índice de rendimiento)", "%", "Mide la eficiencia global real de toda la instalación solar comparando la energía producida con la teórica posible (suele ser 75-85 %)."],
+      ["7. Autoconsumo con Red", "CUPS", "Código Universal de Punto de Suministro", "—", "El 'DNI' único de tu contador de la luz (en España empieza por ES...), necesario para tramitar el autoconsumo y los excedentes."],
+      ["7. Autoconsumo con Red", "Excedentes", "Energía vertida a la red", "kWh", "La electricidad solar que produces, no consumes en ese momento en casa y se envía a la red eléctrica para ser compensada o vendida."],
+      ["7. Autoconsumo con Red", "Producción específica", "Energía producida por unidad de potencia pico instalada", "kWh/kWp", "Permite comparar la producción de instalaciones de tamaños distintos durante el mismo periodo."],
+      ["7. Autoconsumo con Red", "Tasa de autoconsumo", "Fracción de la producción consumida en la instalación", "%", "Parte de la energía generada que se aprovecha en el propio suministro."],
+      ["7. Autoconsumo con Red", "Tasa de autosuficiencia", "Fracción del consumo cubierta por la instalación FV", "%", "Parte de la energía consumida que se cubre con la producción fotovoltaica."]
+    ]],
+    ["8. Bombeo Solar", [
+      ["8. Bombeo Solar", "VFD / Variador", "Variador de frecuencia solar", "Hz / kW", "Equipo que adapta la electricidad variable de los paneles solares para arrancar y regular la velocidad de una bomba de agua sin baterías."],
+      ["8. Bombeo Solar", "TDH / AMT", "Altura manométrica total", "m (metros)", "La altura total equivalente que debe vencer la bomba, sumando la profundidad del pozo, la elevación hasta el depósito y el roce de las tuberías."],
+      ["8. Bombeo Solar", "Q (Caudal)", "Caudal de bombeo", "m³/h o L/min", "La cantidad de agua que la bomba es capaz de mover en una hora o en un minuto."],
+      ["8. Bombeo Solar", "Frecuencia (Hz)", "Frecuencia de trabajo de la bomba", "Hz", "Velocidad a la que gira el motor de la bomba. A más sol, sube hacia 50 Hz (máximo caudal); con nubes baja (ej. 30 Hz) bombeando menos agua."],
+      ["8. Bombeo Solar", "Dry-Run", "Protección contra marcha en seco", "—", "Sensor o función del variador que apaga la bomba automáticamente si el pozo se queda sin agua para evitar que el motor se queme."],
+      ["8. Bombeo Solar", "NPSH", "Altura neta positiva de aspiración", "m (metros)", "Presión mínima necesaria en la entrada de la bomba para que el agua no forme burbujas de vapor (cavitación) que dañen las aspas."]
+    ]],
+    ["9. Cargadores Vehículo Eléctrico", [
+      ["9. Cargadores Vehículo Eléctrico", "EVSE", "Equipo de suministro para vehículo eléctrico", "—", "El nombre técnico del cargador o punto de recarga (wallbox) que entrega energía de forma segura al coche."],
+      ["9. Cargadores Vehículo Eléctrico", "Modo 1, 2, 3 y 4", "Modos de carga normativa IEC 61851", "—", "Niveles de comunicación y seguridad: Modo 2 es enchufe doméstico con cable portátil; Modo 3 es wallbox AC fijo; Modo 4 es carga rápida en continua (DC)."],
+      ["9. Cargadores Vehículo Eléctrico", "Tipo 1 / Tipo 2 / CCS2", "Estándares de conector de carga", "—", "Tipos de clavija: Tipo 2 (Mennekes) es el estándar europeo en corriente alterna; CCS2 es el estándar europeo para carga rápida en continua."],
+      ["9. Cargadores Vehículo Eléctrico", "OBC", "Cargador de a bordo (On-Board Charger)", "kW", "El transformador que lleva el propio coche dentro para convertir la corriente alterna del enchufe de casa en continua para su batería."],
+      ["9. Cargadores Vehículo Eléctrico", "DLB", "Balanceo dinámico de carga", "A / kW", "Sistema inteligente que baja automáticamente la potencia de carga del coche cuando enciendes el horno o la vitrocerámica para que no salten los plomos."],
+      ["9. Cargadores Vehículo Eléctrico", "OCPP", "Protocolo abierto de punto de carga", "—", "El 'idioma' universal que permite que un cargador se comunique con aplicaciones móviles, plataformas de gestión o sistemas de cobro."],
+      ["9. Cargadores Vehículo Eléctrico", "RFID", "Identificación por radiofrecuencia", "—", "Tecnología de tarjetas o llaveros sin contacto para bloquear el cargador y autorizar quién puede empezar a cargar."],
+      ["9. Cargadores Vehículo Eléctrico", "V2G / V2H / V2L", "Carga bidireccional (Red / Hogar / Carga)", "—", "Tecnología que permite usar la batería del coche eléctrico como respaldo para alimentar tu casa (V2H), la red eléctrica (V2G) o un aparato (V2L)."]
+    ]]
+  ]
+}

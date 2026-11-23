@@ -17,6 +17,35 @@ final class CalculatorTabs {
 
     private CalculatorTabs() {}
 
+    static LinearLayout tools(Activity activity, Runnable showHelp) {
+        LinearLayout row = new LinearLayout(activity);
+        LinearLayout.LayoutParams layout = new LinearLayout.LayoutParams(-1, -2);
+        layout.topMargin = dp(activity, 8);
+        row.setLayoutParams(layout);
+        addTool(activity, row, "ⓘ AYUDA", showHelp, dp(activity, 5));
+        addTool(activity, row, "Glosario", () -> Glossary.show(activity), 0);
+        return row;
+    }
+
+    private static void addTool(Activity activity, LinearLayout row, String caption, Runnable action, int marginEnd) {
+        Button button = new Button(activity);
+        button.setAllCaps(false);
+        button.setText(caption);
+        button.setTextSize(13);
+        button.setTextColor(activity.getColor(R.color.blue));
+        button.setTypeface(android.graphics.Typeface.DEFAULT, android.graphics.Typeface.BOLD);
+        button.setGravity(Gravity.CENTER);
+        button.setPadding(dp(activity, 8), dp(activity, 11), dp(activity, 8), dp(activity, 11));
+        GradientDrawable background = new GradientDrawable();
+        background.setColor(0xfff5f8ff);
+        background.setCornerRadius(dp(activity, 10));
+        button.setBackground(background);
+        button.setOnClickListener(view -> action.run());
+        LinearLayout.LayoutParams layout = new LinearLayout.LayoutParams(0, dp(activity, 48), 1);
+        layout.setMarginEnd(marginEnd);
+        row.addView(button, layout);
+    }
+
     static View surround(Activity activity, View content, ProModule selected, Consumer<ProModule> onSelection) {
         LinearLayout screen = new LinearLayout(activity);
         screen.setOrientation(LinearLayout.VERTICAL);
