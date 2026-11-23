@@ -1,6 +1,5 @@
 package es.fenauso.calculadoraelectrica;
 
-import android.app.Activity;
 import android.app.AlertDialog;
 import android.graphics.Color;
 import android.graphics.drawable.GradientDrawable;
@@ -22,7 +21,7 @@ import android.widget.TextView;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
-public final class ProActivity extends Activity {
+public final class ProActivity extends PdfResultActivity {
     static final String MODULE = "module";
     private static final int NAVY = 0xff16324f;
     private static final int BLUE = 0xff2563eb;
@@ -36,6 +35,7 @@ public final class ProActivity extends Activity {
     private ProModule module;
     private ScrollView scroll;
     private TextView result;
+    private Button pdfButton;
     private LinearLayout projectDetails;
     private final java.util.List<View> detailedProjectHeadings = new java.util.ArrayList<>();
 
@@ -99,6 +99,11 @@ public final class ProActivity extends Activity {
         result.setBackgroundColor(Color.WHITE);
         result.setVisibility(View.GONE);
         body.addView(result);
+        pdfButton = action("Guardar PDF", false);
+        pdfButton.setAllCaps(false);
+        pdfButton.setVisibility(View.GONE);
+        pdfButton.setOnClickListener(v -> saveResultPdf(module.title, result.getText()));
+        body.addView(pdfButton);
         if (module == ProModule.PV_PROJECT) {
             projectDetails = column();
             body.addView(projectDetails);
@@ -300,6 +305,7 @@ public final class ProActivity extends Activity {
 
     private void calculate() {
         clearFieldMarks();
+        pdfButton.setVisibility(View.GONE);
         if (projectDetails != null) projectDetails.removeAllViews();
         View firstMissing = null;
         Map<String, String> values = new LinkedHashMap<>();
@@ -324,6 +330,7 @@ public final class ProActivity extends Activity {
             for (String key : FieldIssues.keys(answer)) markField(key);
             result.setText(CalculationResult.format(answer.startsWith("# ") ? answer : "# Resultado\n" + answer));
             result.setTextColor(GREEN);
+            pdfButton.setVisibility(View.VISIBLE);
         } catch (FieldIssues.Invalid e) {
             StringBuilder message = new StringBuilder(e.getMessage());
             for (String key : e.keys) {
@@ -486,6 +493,7 @@ public final class ProActivity extends Activity {
     private void clearResult() {
         clearFieldMarks();
         if (result != null) result.setVisibility(View.GONE);
+        if (pdfButton != null) pdfButton.setVisibility(View.GONE);
         if (projectDetails != null) projectDetails.removeAllViews();
     }
 

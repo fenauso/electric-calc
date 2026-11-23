@@ -1,6 +1,5 @@
 package es.fenauso.calculadoraelectrica;
 
-import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.SharedPreferences;
 import android.content.Intent;
@@ -16,7 +15,7 @@ import android.widget.*;
 
 import java.util.Locale;
 
-public class MainActivity extends Activity {
+public class MainActivity extends PdfResultActivity {
 
     private static final int BLUE = Color.rgb(37,99,235);
     private static final int NAVY = Color.rgb(22,50,79);
@@ -30,6 +29,7 @@ public class MainActivity extends Activity {
     private Spinner mode, phase, loadType, material, insulation, breaker, section;
     private EditText load, voltage, powerFactor, length, temperature, maxDrop;
     private TextView result, equation, loadHint, loadConversion, advancedButton, whyButton;
+    private Button pdfButton;
 
     private boolean advancedVisible = false;
     private boolean hasCalculationResult;
@@ -212,6 +212,15 @@ public class MainActivity extends Activity {
         root.addView(whyButton);
         whyButton.setOnClickListener(v -> showWhy());
 
+        pdfButton = new Button(this);
+        pdfButton.setAllCaps(false);
+        pdfButton.setText("Guardar PDF");
+        pdfButton.setTextColor(BLUE);
+        pdfButton.setBackground(roundRect(Color.rgb(245,248,255), 10));
+        pdfButton.setVisibility(View.GONE);
+        root.addView(pdfButton);
+        pdfButton.setOnClickListener(v -> saveResultPdf("Conductores", result.getText()));
+
         addWatcher(length);
         addWatcher(temperature);
         addWatcher(maxDrop);
@@ -359,6 +368,7 @@ public class MainActivity extends Activity {
 
     private void calculate() {
         clearFieldMarks();
+        pdfButton.setVisibility(View.GONE);
         hasCalculationResult = true;
         if (showMissingFields()) return;
         try {
@@ -413,7 +423,7 @@ public class MainActivity extends Activity {
                 lastExplanation = "El cálculo toma el menor límite de corriente entre el magnetotérmico, la capacidad corregida del cable y la caída de tensión máxima. " +
                         "Con los datos introducidos, la app obtiene aproximadamente " + f(iMax) + " A, equivalentes a " + whole(pMax) + " W. " +
                         simple;
-                whyButton.setVisibility(View.VISIBLE);
+                showCalculationActions();
                 return;
             }
 
@@ -447,7 +457,7 @@ public class MainActivity extends Activity {
 
                 lastExplanation = "La app busca un calibre comercial que sea igual o superior a la corriente de carga (" + f(iLoad) + " A) y que, al mismo tiempo, no supere la capacidad corregida del cable (" + f(iz) + " A). " +
                         (dropOk ? "Además, la caída de tensión cumple el límite introducido." : "La caída de tensión no cumple el límite introducido, por eso aparece una advertencia.");
-                whyButton.setVisibility(View.VISIBLE);
+                showCalculationActions();
             } else {
                 double recSec = ElectricalCalculator.recommendSection(iLoad,in,v,len,dropMax,mat,ins,temp,ph);
                 if (recSec < 0) {
@@ -466,7 +476,7 @@ public class MainActivity extends Activity {
                     showStatus(Status.BAD,
                             "✕ SIN SECCIÓN VÁLIDA EN LA TABLA\n\nCarga: " + f(iLoad) + " A\nPotencia equivalente: " + whole(pLoad) + " W\nMagnetotérmico: " + f(in) + " A\n\nComprueba que la carga no supera el magnetotérmico o revisa los datos.");
                     lastExplanation = "Para poder proteger correctamente el circuito debe cumplirse primero que la corriente de carga no sea mayor que la corriente nominal del magnetotérmico. Después, el cable debe soportar al menos esa protección y cumplir la caída de tensión indicada.";
-                    whyButton.setVisibility(View.VISIBLE);
+                    showCalculationActions();
                     return;
                 }
 
@@ -484,7 +494,7 @@ public class MainActivity extends Activity {
 
                 lastExplanation = "La sección " + sectionText(recSec) + " es la primera sección comercial de la tabla que cumple simultáneamente dos condiciones: " +
                         "su capacidad corregida (Iz ≈ " + f(iz) + " A) es igual o superior al magnetotérmico de " + f(in) + " A, y la caída de tensión queda en " + f(pct) + " %, por debajo del máximo de " + f(dropMax) + " %.";
-                whyButton.setVisibility(View.VISIBLE);
+                showCalculationActions();
             }
         } catch (Exception e) {
             showStatus(Status.BAD,"✕ REVISA LOS DATOS\n\n" + (e.getMessage()==null ? "Hay un valor no válido." : e.getMessage()));
@@ -740,6 +750,12 @@ public class MainActivity extends Activity {
         hasCalculationResult = false;
         lastExplanation = "";
         whyButton.setVisibility(View.GONE);
+        pdfButton.setVisibility(View.GONE);
+    }
+
+    private void showCalculationActions() {
+        whyButton.setVisibility(View.VISIBLE);
+        pdfButton.setVisibility(View.VISIBLE);
     }
 
     private LinearLayout card() {

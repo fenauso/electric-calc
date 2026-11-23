@@ -8,8 +8,8 @@ android {
         applicationId = "es.fenauso.calculadoraelectrica"
         minSdk = 26
         targetSdk = 35
-        versionCode = 4
-        versionName = "PRO 1.1"
+        versionCode = 5
+        versionName = "PRO 1.2"
     }
 
     buildTypes {
